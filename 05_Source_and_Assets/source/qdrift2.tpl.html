@@ -1,0 +1,953 @@
+<meta charset="utf-8">
+<title>Q-DRIFT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Martian+Mono:wght@400;500&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+<style>
+/* Layout: one plotted sheet at a time on engineering graph paper, content left-aligned, a drawing title block bottom-right.
+   Pens carry meaning on every sheet: blue = what the model thinks is normal, red = alarm or fault, orange = drift, violet = quantum encodings being tested, green = adapted. */
+:root{
+  --paper:#EDF0EA; --grid:#DCE2D7; --grid-major:#C6CFC1; --ink:#16212B; --ink2:#56616B; --rule:#9AA59C; --plate:#FFFFFF;
+  --blue:#2251A8; --red:#C2303A; --orange:#D2690A; --violet:#6B48C8; --green:#2C7A4B;
+  --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --f-body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --f-data:"Martian Mono",ui-monospace,Consolas,monospace;
+  --t-fast:.18s; --t-normal:.35s; --t-slow:.6s; --t-crawl:1s;
+  --ease:cubic-bezier(.22,1,.36,1); --ease-bounce:cubic-bezier(.34,1.56,.64,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0E1A2A; --grid:#15273C; --grid-major:#1F3653; --ink:#E7EDF4; --ink2:#9DABBC; --rule:#3B5475; --plate:#13243A;
+  --blue:#7FB1FF; --red:#FF7176; --orange:#FFA650; --violet:#B39CFF; --green:#5DD496; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E1A2A; --grid:#15273C; --grid-major:#1F3653; --ink:#E7EDF4; --ink2:#9DABBC; --rule:#3B5475; --plate:#13243A;
+  --blue:#7FB1FF; --red:#FF7176; --orange:#FFA650; --violet:#B39CFF; --green:#5DD496; color-scheme:dark}
+
+html,body{height:100%}
+body{margin:0;background-color:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;overflow:hidden;
+  background-image:linear-gradient(var(--grid-major) 1px,transparent 1px),linear-gradient(90deg,var(--grid-major) 1px,transparent 1px),linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:120px 120px,120px 120px,24px 24px,24px 24px}
+*{box-sizing:border-box}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.data{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+
+#app{height:100%;display:flex;flex-direction:column}
+/* header */
+.top{display:flex;align-items:center;gap:16px;padding:10px clamp(16px,3vw,36px);border-bottom:1.5px solid var(--ink);background:var(--paper)}
+.logo{font-family:var(--f-display);font-weight:800;font-size:28px;letter-spacing:.02em;line-height:1}
+.logo b{color:var(--green)}
+.top .where{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbtn{border:1.5px solid var(--ink);background:var(--paper);border-radius:3px;padding:6px 12px;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}
+.tbtn:hover{background:var(--ink);color:var(--paper)}
+.tbtn[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* stage + sheets */
+.stage{position:relative;flex:1;min-height:0}
+.sheet{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:clamp(14px,2.4vh,28px) clamp(16px,3vw,48px) 28px;
+  opacity:0;visibility:hidden;transform:translateY(var(--lift,10px));transition:opacity var(--t-slow) var(--ease),transform var(--t-slow) var(--ease),visibility 0s var(--t-slow)}
+.sheet.on{opacity:1;visibility:visible;transform:none;transition:opacity var(--t-slow) var(--ease),transform var(--t-slow) var(--ease)}
+.inner{max-width:1280px;margin:0 auto;min-width:0}
+h2.hl{font-family:var(--f-display);font-weight:800;font-size:clamp(34px,5.2vw,72px);line-height:.95;letter-spacing:.005em;margin:0 0 10px;text-wrap:balance;max-width:20ch}
+.lead{font-size:clamp(16px,1.35vw,19px);color:var(--ink2);max-width:58ch;margin:0 0 clamp(14px,2.4vh,26px)}
+.row{display:grid;gap:clamp(16px,2.4vw,36px);align-items:start}
+.c2{grid-template-columns:1fr 1fr} .c32{grid-template-columns:3fr 2fr} .c23{grid-template-columns:2fr 3fr}
+.row > *{min-width:0}
+
+/* plotting surfaces */
+.plot{position:relative;border:1.5px solid var(--ink);background:color-mix(in srgb,var(--paper) 70%,transparent)}
+.plot canvas{display:block;width:100%;height:100%}
+.plot .axis{position:absolute;left:8px;bottom:6px;font-size:12px;color:var(--ink2)}
+
+/* figure plates */
+figure.plate{margin:0;position:relative;padding:8px;background:var(--plate);border:1px solid var(--rule)}
+figure.plate::before,figure.plate::after{content:"";position:absolute;width:14px;height:14px;border-color:var(--ink);border-style:solid}
+figure.plate::before{left:-6px;top:-6px;border-width:1.5px 0 0 1.5px}
+figure.plate::after{right:-6px;bottom:-6px;border-width:0 1.5px 1.5px 0}
+figure.plate img{display:block;width:100%;height:auto}
+figure.plate figcaption{font-size:13px;color:var(--ink2);padding-top:7px}
+figure.plate figcaption i{font-style:normal;font-weight:700;color:var(--ink)}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:12px 0}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:3px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 13px;font-weight:600;font-size:14px;cursor:pointer;border-right:1.5px solid var(--ink)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.btn{border:1.5px solid var(--ink);background:var(--paper);border-radius:3px;padding:7px 14px;font-weight:600;font-size:14px;cursor:pointer;transition:transform var(--t-fast) var(--ease)}
+.btn:active{transform:scale(.96)}
+.btn.drift{border-color:var(--orange);color:var(--orange)} .btn.drift:hover{background:var(--orange);color:var(--paper)}
+.btn.go{background:var(--ink);color:var(--paper)}
+.range{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:min(260px,52vw);height:2px;background:var(--ink);border-radius:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--paper);border:2px solid var(--ink);cursor:grab}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--paper);border:2px solid var(--ink);cursor:grab}
+.switch{display:inline-flex;align-items:center;gap:10px;font-weight:600;font-size:14px;cursor:pointer}
+.switch input{appearance:none;-webkit-appearance:none;width:44px;height:24px;border:1.5px solid var(--ink);border-radius:12px;position:relative;margin:0;cursor:pointer;background:var(--paper)}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:15px;height:15px;border-radius:50%;background:var(--ink);transition:transform var(--t-normal) var(--ease-bounce)}
+.switch input:checked{background:var(--green);border-color:var(--green)}
+.switch input:checked::after{transform:translateX(20px);background:var(--paper)}
+
+/* readouts */
+.readouts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));border-top:1.5px solid var(--ink);border-left:1.5px solid var(--ink)}
+.ro{border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);padding:8px 12px;background:color-mix(in srgb,var(--paper) 80%,transparent)}
+.ro small{display:block;font-size:12px;color:var(--ink2)}
+.ro b{font-family:var(--f-data);font-weight:500;font-size:clamp(18px,1.8vw,24px)}
+.ro.red b{color:var(--red)} .ro.green b{color:var(--green)} .ro.violet b{color:var(--violet)}
+.status{font-family:var(--f-data);font-size:13px;margin-top:8px;min-height:1.5em}
+.status::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--status,var(--blue));margin-right:8px;vertical-align:1px}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--ink2);margin-top:8px}
+.legend span::before{content:"";display:inline-block;width:18px;height:3px;background:var(--c);margin-right:7px;vertical-align:4px}
+.note{font-size:13px;color:var(--ink2);font-style:italic;margin-top:6px}
+
+/* ===== sheet specifics ===== */
+/* 1 title */
+.title-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(16px,3vw,40px);align-items:center}
+.mega{font-family:var(--f-display);font-weight:800;font-size:clamp(84px,15vw,220px);line-height:.82;letter-spacing:-.01em;margin:0;display:flex}
+.mega span{display:inline-block}
+.mega .g{color:var(--green)}
+.on .mega span{animation:letter-in var(--t-crawl) var(--ease-bounce) both;animation-delay:calc(var(--i) * 70ms)}
+@keyframes letter-in{from{transform:translateY(.12em)}}
+@keyframes plot-in{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.title-sub{font-size:clamp(18px,1.8vw,24px);max-width:30ch;margin:14px 0 18px;font-weight:500}
+.team{display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:4px 28px;margin-top:14px}
+.team div{font-weight:700;font-size:16px}
+.team small{display:block;font-weight:400;color:var(--ink2);font-size:13px}
+.hero-trace{height:clamp(120px,20vh,190px);margin-top:18px}
+.orbit-svg{width:100%;max-width:520px;display:block;margin:0 auto;overflow:visible}
+
+.show{position:relative;aspect-ratio:4/5;overflow:hidden;background:#0b1424}
+.show img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:slide 21s linear infinite}
+.show img:nth-child(1){animation-delay:-14s} .show img:nth-child(2){animation-delay:-7s} .show img:nth-child(3){animation-delay:0s}
+@keyframes slide{0%{opacity:1;transform:scale(1.02)}30%{opacity:1}36%{opacity:0;transform:scale(1.12)}94%{opacity:0;transform:scale(1.02)}100%{opacity:1;transform:scale(1.02)}}
+.show .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 12px 10px;color:#fff;font-size:13px;background:linear-gradient(transparent,rgba(0,0,0,.75));opacity:0;animation:slide 21s linear infinite}
+.show .cap:nth-of-type(1){animation-delay:-14s} .show .cap:nth-of-type(2){animation-delay:-7s} .show .cap:nth-of-type(3){animation-delay:0s}
+.float{animation:bob 6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px)}}
+.teamcard{border:1.5px solid var(--ink);background:var(--paper);margin-top:18px}
+.teamcard table{width:100%;border-collapse:collapse;font-size:15px}
+.teamcard th,.teamcard td{padding:8px 12px;border-bottom:1px solid var(--rule);text-align:left}
+.teamcard th{font-size:12px;color:var(--ink2);font-weight:600}
+.teamcard td.reg{font-family:var(--f-data);font-size:14px}
+.teamcard caption{caption-side:top;text-align:left;padding:8px 12px;font-family:var(--f-display);font-weight:800;font-size:24px;border-bottom:1.5px solid var(--ink)}
+.pdfbtn{display:inline-block;text-decoration:none;color:var(--ink)}
+/* 2 telemetry */
+.mission{display:grid;gap:10px}
+.mission .plot{height:92px}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);border-top:1.5px solid var(--ink);margin-top:clamp(14px,2.4vh,26px)}
+.stats3 div{padding:10px 14px 0 0}
+.stats3 b{display:block;font-family:var(--f-display);font-weight:800;font-size:clamp(44px,6vw,86px);line-height:.9}
+.stats3 span{color:var(--ink2);font-size:14px}
+
+/* 3 problem */
+.problem-plot{height:clamp(230px,40vh,400px)}
+
+/* 4 kernel */
+.kernel-wrap{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+.kernel-wrap .plot{aspect-ratio:4/3}
+.hm{aspect-ratio:1}
+.kstate{font-weight:700;margin-top:6px}
+
+/* 5 gap matrix */
+.matrix{overflow-x:auto}
+.matrix table{border-collapse:collapse;min-width:720px;width:100%}
+.matrix th,.matrix td{border-bottom:1px solid var(--rule);padding:10px 10px;text-align:center}
+.matrix th:first-child,.matrix td:first-child{text-align:left}
+.matrix thead th{border-bottom:1.5px solid var(--ink);vertical-align:bottom}
+.matrix thead button{background:none;border:0;font-weight:700;font-size:13px;cursor:pointer;padding:4px 6px;border-radius:3px;line-height:1.2}
+.matrix thead button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.matrix td:first-child{font-size:15px}
+.matrix td small{display:block;color:var(--ink2);font-size:12px}
+.matrix tr.ours td{border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);font-weight:700}
+.matrix tr.dim td{opacity:.28;transition:opacity var(--t-normal)}
+.dot{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid var(--ink)}
+.dot.y{background:var(--ink)} .dot.h{background:linear-gradient(90deg,var(--ink) 50%,transparent 50%)}
+.ours .dot.y{background:var(--green);border-color:var(--green)}
+.on .matrix .dot{animation:dot-in var(--t-normal) var(--ease-bounce) both;animation-delay:calc(var(--d,0) * 45ms + 200ms)}
+@keyframes dot-in{from{transform:scale(0)}}
+
+/* 6 idea */
+.idea-plot{height:clamp(280px,46vh,440px)}
+.scrub{display:flex;align-items:center;gap:12px;margin-top:10px}
+.scrub input{flex:1;width:auto}
+
+/* 7 architecture */
+.arch svg{width:100%;height:auto;display:block;overflow:visible}
+.arch .nbox{fill:var(--paper);stroke:var(--ink);stroke-width:1.5;transition:fill var(--t-normal),stroke var(--t-normal)}
+.arch .node{cursor:pointer}
+.arch .node:hover .nbox,.arch .node:focus .nbox{stroke-width:3}
+.arch .nt{font-family:var(--f-display);font-weight:800;font-size:26px;fill:var(--ink)}
+.arch .ns{font-size:14px;fill:var(--ink2)}
+.arch .lit-orange .nbox{fill:color-mix(in srgb,var(--orange) 22%,var(--paper));stroke:var(--orange)}
+.arch .lit-violet .nbox{fill:color-mix(in srgb,var(--violet) 18%,var(--paper));stroke:var(--violet)}
+.arch .lit-green .nbox{fill:color-mix(in srgb,var(--green) 20%,var(--paper));stroke:var(--green)}
+.arch .chip rect{fill:var(--paper);stroke:var(--violet);stroke-width:1.5;transition:fill var(--t-fast)}
+.arch .chip text{font-size:13px;fill:var(--ink);font-weight:600}
+.arch .chip.scan rect{fill:color-mix(in srgb,var(--violet) 35%,var(--paper))}
+.arch .chip.win rect{fill:var(--green);stroke:var(--green)} .arch .chip.win text{fill:var(--paper)}
+.arch .wire{fill:none;stroke:var(--ink);stroke-width:1.5}
+.arch .wire.loop{stroke:var(--violet);stroke-dasharray:7 6}
+.arch .wire.hot{stroke:var(--orange);stroke-width:3}
+.on .arch .wire.loop{animation:march 1s linear infinite}
+@keyframes march{to{stroke-dashoffset:-26}}
+.arch-note{min-height:3em;border-left:3px solid var(--ink);padding-left:12px;margin-top:10px;max-width:70ch}
+
+/* 8 lens */
+.lens-list{position:relative;height:calc(6 * 54px)}
+.lens-item{position:absolute;left:0;right:0;height:46px;display:grid;grid-template-columns:minmax(150px,210px) 1fr 70px;align-items:center;gap:12px;transition:transform var(--t-slow) var(--ease)}
+.lens-item .nm{font-weight:600;font-size:15px}
+.lens-item .bar{height:18px;border:1.5px solid var(--ink);position:relative;overflow:hidden}
+.lens-item .bar i{position:absolute;inset:0;background:var(--ink2);transform-origin:left center;transition:transform var(--t-slow) var(--ease)}
+.lens-item .bar u{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,var(--red) 0 2px,transparent 2px 6px);transition:left var(--t-slow) var(--ease),width var(--t-slow) var(--ease)}
+.lens-item .val{font-family:var(--f-data);font-size:14px;text-align:right}
+.lens-item.win .nm{color:var(--green)} .lens-item.win .bar{border-color:var(--green)} .lens-item.win .bar i{background:var(--green)}
+.formula{font-family:var(--f-data);font-size:clamp(13px,1.2vw,16px);border:1.5px solid var(--ink);padding:10px 14px;display:inline-block;margin:6px 0 10px;background:var(--paper)}
+
+/* 9 lab */
+.lab-plot{height:clamp(240px,42vh,420px)}
+
+/* 10 eval */
+.plates3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.plates3 figure img{aspect-ratio:1;object-fit:cover}
+.plates3 figure img.contain{object-fit:contain;background:#0b1424}
+.evalchart svg{width:100%;height:auto;display:block}
+.evalchart .ax{font-size:12px;fill:var(--ink2);font-family:var(--f-data)}
+.evalchart .grid line{stroke:var(--grid-major)}
+.evalchart .ln{fill:none;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.on .evalchart .ln{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 2.4s var(--ease) forwards;animation-delay:calc(var(--d,0) * 350ms + 300ms)}
+@keyframes draw{to{stroke-dashoffset:0}}
+.tip{font-family:var(--f-data);font-size:12px}
+.hyp{display:inline-block;border:1.5px dashed var(--orange);color:var(--orange);font-weight:700;font-size:13px;padding:3px 10px;border-radius:3px}
+ul.plain{margin:8px 0 0;padding-left:18px} ul.plain li{margin:3px 0}
+
+/* 11 close */
+.close-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,3vw,40px);align-items:center}
+.close-plate img{animation:ken 26s ease-in-out infinite alternate}
+.close-plate{overflow:hidden}
+@keyframes ken{from{transform:scale(1)}to{transform:scale(1.12) translate(-2%,-1%)}}
+.words{font-family:var(--f-display);font-weight:800;font-size:clamp(48px,7.5vw,110px);line-height:.88;margin:0}
+.words span{display:block}
+.words span:nth-child(1){color:var(--orange)} .words span:nth-child(2){color:var(--violet)} .words span:nth-child(3){color:var(--green)}
+.on .words span{animation:plot-in var(--t-crawl) var(--ease) both;animation-delay:calc(var(--i) * 260ms)}
+
+/* footer: sheet index + title block */
+.foot{display:flex;align-items:stretch;border-top:1.5px solid var(--ink);background:var(--paper)}
+.nav{display:flex;align-items:center;gap:8px;padding:8px clamp(12px,2vw,24px);flex:1;min-width:0}
+.nav .arrow{width:36px;height:36px;border:1.5px solid var(--ink);border-radius:3px;background:var(--paper);display:grid;place-items:center;cursor:pointer;flex:none}
+.nav .arrow:hover{background:var(--ink)} .nav .arrow:hover path{stroke:var(--paper)}
+.ticks{display:flex;gap:4px;flex:1;min-width:0;align-items:flex-end;height:28px}
+.ticks button{flex:1;border:0;background:transparent;cursor:pointer;padding:0;height:100%;position:relative;font-family:var(--f-data);font-size:10px;color:var(--ink2)}
+.ticks button::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;border:1.5px solid var(--ink);border-bottom:0}
+.ticks button.done::after{background:var(--ink2)}
+.ticks button.cur::after{height:14px;background:var(--green);border-color:var(--green)}
+.tblock{display:grid;grid-template-columns:auto auto auto;border-left:1.5px solid var(--ink);font-size:12px}
+.tblock div{padding:4px 12px;border-right:1px solid var(--rule)}
+.tblock div:last-child{border-right:0}
+.tblock small{display:block;color:var(--ink2);font-size:10.5px}
+.tblock b{font-weight:600}
+
+/* abstract drawer */
+.drawer{position:fixed;inset:0;z-index:20;display:flex;justify-content:flex-end;background:color-mix(in srgb,var(--ink) 35%,transparent);opacity:0;visibility:hidden;transition:opacity var(--t-normal),visibility 0s var(--t-normal)}
+.drawer.open{opacity:1;visibility:visible;transition:opacity var(--t-normal)}
+.drawer article{width:min(640px,100%);height:100%;overflow-y:auto;background:var(--paper);border-left:1.5px solid var(--ink);padding:28px clamp(18px,3vw,36px) 40px;transform:translateX(30px);transition:transform var(--t-slow) var(--ease)}
+.drawer.open article{transform:none}
+.drawer h3{font-family:var(--f-display);font-weight:800;font-size:40px;margin:0 0 4px;line-height:1}
+.drawer p{max-width:62ch}
+.drawer .kw{font-size:14px;color:var(--ink2)}
+.drawer a{color:var(--blue)}
+
+@media (max-width:900px){
+  .title-grid,.c2,.c32,.c23,.close-grid,.kernel-wrap{grid-template-columns:1fr}
+  .tblock{display:none}
+  .top .where{display:none}
+  .plates3{grid-template-columns:repeat(3,1fr);gap:8px}
+  .team{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.15s!important;transition-property:opacity!important}
+  .sheet{transform:none!important}
+}
+</style>
+
+<div id="app">
+  <header class="top">
+    <div class="logo">Q-<b>DRIFT</b></div>
+    <div class="where" id="where">Title</div>
+    <button class="tbtn" id="absBtn" aria-haspopup="dialog">Abstract</button>
+    <button class="tbtn" id="fsBtn" aria-label="Toggle fullscreen">Fullscreen</button>
+  </header>
+
+  <main class="stage" id="stage">
+
+  <!-- 1 -->
+  <section class="sheet on" data-title="Title" aria-label="Title">
+    <div class="inner title-grid">
+      <div>
+        <h1 class="mega" aria-label="Q-DRIFT"><span style="--i:0">Q</span><span style="--i:1">-</span><span class="g" style="--i:2">D</span><span class="g" style="--i:3">R</span><span class="g" style="--i:4">I</span><span class="g" style="--i:5">F</span><span class="g" style="--i:6">T</span></h1>
+        <p class="title-sub">Drift-aware quantum kernels that keep spacecraft anomaly detection accurate when “normal” changes.</p>
+        <p style="margin:0 0 6px;color:var(--ink2);font-size:14px">Faculty: Dr. M. L. Sworna Kokila</p>
+        <div class="team">
+          <div>Venkatanathan O R V<small>RA2411026011163</small></div>
+          <div>Mayukh Sarkar<small>RA2411026011218</small></div>
+          <div>Aman Salarpuria<small>RA2411003012435</small></div>
+        </div>
+        <div class="plot hero-trace"><canvas id="heroTrace" aria-label="A sensor trace shifts level; Q-DRIFT detects it and moves its notion of normal to follow"></canvas></div>
+        <div class="legend"><span style="--c:var(--blue)">model’s normal band</span><span style="--c:var(--red)">alarms</span><span style="--c:var(--orange)">mode change</span><span style="--c:var(--green)">encoding swapped</span></div>
+      </div>
+      <div>
+        <figure class="plate"><div class="show" role="img" aria-label="Slideshow: aurora over Earth from the International Space Station, the SMAP launch, and a Deep Space Network antenna">
+          <img src="%%DSN%%" alt=""><img src="%%LAUNCH%%" alt=""><img src="%%ISSEARTH%%" alt="">
+          <span class="cap">Deep Space Network, Goldstone: where telemetry comes home. NASA.</span>
+          <span class="cap">SMAP launches on a Delta II rocket, 2015. NASA/Kim Shiflett.</span>
+          <span class="cap">Aurora over Earth from the International Space Station. NASA.</span>
+        </div></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="sheet" data-title="Telemetry" aria-label="Telemetry">
+    <div class="inner">
+      <h2 class="hl">Spacecraft report their health as telemetry</h2>
+      <p class="lead">Thousands of sensor readings stream home every hour. NASA released real, expert-labelled telemetry from two missions.</p>
+      <div class="row c2">
+        <div class="mission">
+          <figure class="plate" style="overflow:hidden"><img class="float" src="%%LAUNCH%%" alt="SMAP launching on a Delta II rocket" style="height:clamp(150px,24vh,250px);width:100%;object-fit:cover;object-position:50% 35%"><figcaption><i>Fig. 2</i> SMAP leaves Earth on a Delta II rocket, 2015. 55 telemetry channels. NASA/Kim Shiflett.</figcaption></figure>
+          <div class="plot"><canvas data-stream="1" aria-label="Live SMAP-style telemetry trace"></canvas><span class="axis">channel 12 of 55</span></div>
+        </div>
+        <div class="mission">
+          <figure class="plate" style="overflow:hidden"><img class="float" src="%%SELFIE%%" alt="Curiosity rover self-portrait at Vera Rubin Ridge" style="height:clamp(150px,24vh,250px);width:100%;object-fit:cover;object-position:50% 30%;animation-delay:-3s"><figcaption><i>Fig. 3</i> Curiosity at Vera Rubin Ridge, Mars, 2019. 27 channels. NASA/JPL-Caltech/MSSS.</figcaption></figure>
+          <div class="plot"><canvas data-stream="2" aria-label="Live MSL-style telemetry trace"></canvas><span class="axis">channel 7 of 27</span></div>
+        </div>
+      </div>
+      <div class="stats3">
+        <div><b class="data" data-count="82">82</b><span>telemetry channels</span></div>
+        <div><b class="data" data-count="105" style="color:var(--red)">105</b><span>expert-labelled anomalies</span></div>
+        <div><b class="data" data-count="496444" data-fmt="k">496k</b><span>readings evaluated (Hundman et al., KDD 2018)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="sheet" data-title="The problem" aria-label="The drift problem">
+    <div class="inner">
+      <h2 class="hl">When the mode changes, a fixed model cries wolf</h2>
+      <p class="lead">The model learned one band of normal. After a mode change, ordinary readings fall outside it, and a real fault hides among the false alarms.</p>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Drift type">
+          <button id="pAbrupt" data-drift="abrupt" aria-pressed="true">Abrupt: new mode</button>
+          <button id="pGradual" data-drift="gradual" aria-pressed="false">Gradual: sensor ageing</button>
+          <button id="pRecur" data-drift="recurring" aria-pressed="false">Recurring: day and night</button>
+        </div>
+        <button class="btn" id="pReplay">Replot</button>
+      </div>
+      <div class="plot problem-plot"><canvas id="problemPlot" aria-label="Sensor trace after drift with false alarms from a fixed model"></canvas></div>
+      <div class="legend"><span style="--c:var(--ink)">sensor reading</span><span style="--c:var(--blue)">band the model learned</span><span style="--c:var(--red)">false alarm flags</span><span style="--c:var(--orange)">drift</span></div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="sheet" data-title="Kernel lab" aria-label="Quantum kernel lab">
+    <div class="inner">
+      <h2 class="hl">A quantum kernel separates data only if the encoding fits</h2>
+      <p class="lead">Pick an encoding circuit and its bandwidth. Watch normal (blue) and anomalous (red) readings separate, and the kernel matrix sharpen or wash out.</p>
+      <div class="row c23">
+        <figure class="plate"><img class="float" src="%%FRIDGE%%" alt="Render of a dilution refrigerator holding quantum processors" style="aspect-ratio:1;object-fit:contain"><figcaption><i>Fig. 4</i> Inside a quantum computer: the dilution refrigerator that cools the qubits (render). We simulate 4–8 qubits. Image: OJB Quantum, CC BY 4.0.</figcaption></figure>
+        <div>
+          <div class="controls" style="margin-top:0">
+            <div class="seg" role="group" aria-label="Encoding">
+              <button id="kAngle" data-enc="angle" aria-pressed="false">Angle</button>
+              <button id="kZZ" data-enc="zz" aria-pressed="true">ZZ</button>
+              <button id="kIQP" data-enc="iqp" aria-pressed="false">IQP</button>
+            </div>
+            <label class="range" for="kBw">Bandwidth β <input id="kBw" type="range" min="0.1" max="2" step="0.05" value="1"><span class="data" id="kBwV">1.00</span></label>
+          </div>
+          <div class="kernel-wrap">
+            <div class="plot"><canvas id="kPts" aria-label="Readings in quantum feature space"></canvas><span class="axis">feature space</span></div>
+            <div><div class="plot hm"><canvas id="kHm" aria-label="Kernel matrix heatmap"></canvas></div><div class="note">kernel matrix k(x, x′)</div></div>
+          </div>
+          <div class="readouts" style="margin-top:12px">
+            <div class="ro violet"><small>kernel-target alignment</small><b id="kAlign">0.00</b></div>
+            <div class="ro"><small>what is happening</small><b id="kState" style="font-size:15px;font-family:var(--f-body);font-weight:700">…</b></div>
+          </div>
+          <p class="note">Illustrative model of the effect, not a measurement. Too large a β makes all kernel values look alike (exponential concentration, Thanasilp et al. 2024).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="sheet" data-title="Research gap" aria-label="Research gap">
+    <div class="inner">
+      <h2 class="hl">Each piece exists. Nobody has put them together.</h2>
+      <p class="lead">Click a capability to see who has it.</p>
+      <div class="matrix">
+        <table>
+          <thead><tr><th style="text-align:left">Prior work</th>
+            <th><button id="gQ" data-col="1" aria-pressed="false">Quantum model</button></th>
+            <th><button id="gS" data-col="2" aria-pressed="false">Spacecraft data</button></th>
+            <th><button id="gA" data-col="3" aria-pressed="false">Detects anomalies</button></th>
+            <th><button id="gD" data-col="4" aria-pressed="false">Adapts to drift</button></th>
+            <th><button id="gC" data-col="5" aria-pressed="false">Counts quantum cost</button></th></tr></thead>
+          <tbody>
+            <tr data-v="0,1,1,0.5,0"><td>LSTM + dynamic thresholds<small>Hundman et al., NASA JPL, 2018</small></td><td><i class="dot" style="--d:1"></i></td><td><i class="dot y" style="--d:2"></i></td><td><i class="dot y" style="--d:3"></i></td><td><i class="dot h" style="--d:4"></i></td><td><i class="dot" style="--d:5"></i></td></tr>
+            <tr data-v="1,0,1,0,1"><td>Quantum one-class SVM<small>Kölle et al., 2024</small></td><td><i class="dot y" style="--d:6"></i></td><td><i class="dot" style="--d:7"></i></td><td><i class="dot y" style="--d:8"></i></td><td><i class="dot" style="--d:9"></i></td><td><i class="dot y" style="--d:10"></i></td></tr>
+            <tr data-v="1,0,1,0,0"><td>Quantum autoencoders for time series<small>arXiv 2410.04154, 2024</small></td><td><i class="dot y" style="--d:11"></i></td><td><i class="dot" style="--d:12"></i></td><td><i class="dot y" style="--d:13"></i></td><td><i class="dot" style="--d:14"></i></td><td><i class="dot" style="--d:15"></i></td></tr>
+            <tr data-v="1,0,0,0,0"><td>Trainable and bandwidth-tuned quantum kernels<small>Hubregtsen et al.; Shaydulin and Wild, 2022</small></td><td><i class="dot y" style="--d:16"></i></td><td><i class="dot" style="--d:17"></i></td><td><i class="dot" style="--d:18"></i></td><td><i class="dot" style="--d:19"></i></td><td><i class="dot" style="--d:20"></i></td></tr>
+            <tr data-v="0,0,0.5,1,0"><td>ADWIN drift detector<small>Bifet and Gavaldà, 2007</small></td><td><i class="dot" style="--d:21"></i></td><td><i class="dot" style="--d:22"></i></td><td><i class="dot h" style="--d:23"></i></td><td><i class="dot y" style="--d:24"></i></td><td><i class="dot" style="--d:25"></i></td></tr>
+            <tr class="ours" data-v="1,1,1,1,1"><td>Q-DRIFT (this project)</td><td><i class="dot y" style="--d:27"></i></td><td><i class="dot y" style="--d:28"></i></td><td><i class="dot y" style="--d:29"></i></td><td><i class="dot y" style="--d:30"></i></td><td><i class="dot y" style="--d:31"></i></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="legend" style="margin-top:12px"><span style="--c:var(--ink)">filled: yes</span><span style="--c:var(--ink2)">half: partly</span><span style="--c:transparent">empty: no</span><span style="--c:transparent">To our knowledge, no quantum work uses NASA SMAP/MSL.</span></div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="sheet" data-title="The idea" aria-label="The idea">
+    <div class="inner">
+      <h2 class="hl">Swap the encoding. Keep the model.</h2>
+      <p class="lead">Same drift, two models. Drag the time slider or let it play. The fixed model keeps alarming; Q-DRIFT detects the drift, tests encodings and switches.</p>
+      <div class="plot idea-plot"><canvas id="ideaPlot" aria-label="Anomaly score of a fixed quantum model and of Q-DRIFT over the same drift"></canvas></div>
+      <div class="scrub"><button class="btn" id="ideaPlay" aria-pressed="true">Pause</button><input id="ideaScrub" type="range" min="0" max="1000" value="0" aria-label="Time"><span class="data" id="ideaT">t = 0%</span></div>
+      <div class="readouts" style="margin-top:12px">
+        <div class="ro red"><small>Fixed QSVM false alarms</small><b id="ideaFA1">0</b></div>
+        <div class="ro green"><small>Q-DRIFT false alarms</small><b id="ideaFA2">0</b></div>
+        <div class="ro violet"><small>Q-DRIFT encoding</small><b id="ideaEnc" style="font-size:18px">Angle · β 1</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="sheet" data-title="How it works" aria-label="System architecture">
+    <div class="inner">
+      <h2 class="hl">How Q-DRIFT works</h2>
+      <p class="lead">Press run to watch one adaptation cycle. Hover or focus any block to see what it does.</p>
+      <div class="controls" style="margin-top:0"><button class="btn go" id="archRun">Run a drift event</button></div>
+      <div class="arch">
+        <svg viewBox="0 0 1200 500" role="img" aria-label="Telemetry flows through windowing and a quantum one-class SVM to an alarm; a drift detector triggers a controller that tests a library of encodings and swaps the best one in">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker>
+            <marker id="ahv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--violet)"/></marker>
+          </defs>
+          <path class="wire" d="M262 100H318" marker-end="url(#ah)"/>
+          <path class="wire" d="M562 100H618" marker-end="url(#ah)"/>
+          <path class="wire" d="M882 100H938" marker-end="url(#ah)"/>
+          <path class="wire" id="wScore" d="M1060 160V318" marker-end="url(#ah)"/>
+          <path class="wire" id="wDrift" d="M938 380H884" marker-end="url(#ah)"/>
+          <path class="wire loop" id="wSwap" d="M750 320V162" marker-end="url(#ahv)"/>
+          <path class="wire" d="M562 380H618" marker-end="url(#ah)"/>
+          <g class="node" id="nTel" tabindex="0" data-note="Telemetry: SMAP and Curiosity channels read one window at a time, strictly in time order so the model never sees the future."><rect class="nbox" x="20" y="40" width="242" height="120"/><text class="nt" x="40" y="92">Telemetry</text><text class="ns" x="40" y="124">SMAP + MSL stream</text></g>
+          <g class="node" id="nWin" tabindex="0" data-note="Window + PCA: each channel is z-normalised, a sliding window is compressed to 4–8 numbers, one per qubit."><rect class="nbox" x="320" y="40" width="242" height="120"/><text class="nt" x="340" y="92">Window + PCA</text><text class="ns" x="340" y="124">to 4–8 qubit inputs</text></g>
+          <g class="node" id="nQ" tabindex="0" data-note="Quantum one-class SVM: the current feature map encodes each window; the quantum kernel scores how far it is from normal."><rect class="nbox" x="620" y="40" width="262" height="120"/><text class="nt" x="640" y="92">Quantum OC-SVM</text><text class="ns" id="nQenc" x="640" y="124">encoding: Angle · β 1</text></g>
+          <g class="node" id="nAl" tabindex="0" data-note="Alarm: a score above the threshold alerts the mission team."><rect class="nbox" x="940" y="40" width="240" height="120"/><text class="nt" x="960" y="92">Alarm</text><text class="ns" x="960" y="124">score above threshold</text></g>
+          <g class="node" id="nDet" tabindex="0" data-note="Drift detector (ADWIN): compares the mean of recent scores with older ones and flags a statistically significant shift."><rect class="nbox" x="940" y="320" width="240" height="120"/><text class="nt" x="960" y="372">Drift detector</text><text class="ns" x="960" y="404">ADWIN on the scores</text></g>
+          <g class="node" id="nCtl" tabindex="0" data-note="Controller: scores every library encoding by kernel-target alignment on recent data, subtracts a cost penalty, and swaps the best one in. A cache reuses encodings for modes seen before."><rect class="nbox" x="620" y="320" width="262" height="120"/><text class="nt" x="640" y="372">Controller</text><text class="ns" id="nCtlS" x="640" y="404">waiting for drift</text></g>
+          <g class="node" id="nLib" tabindex="0" data-note="Library: a small, fixed set of candidate encodings: Angle, ZZ and IQP feature maps at several bandwidths and depths.">
+            <rect class="nbox" x="20" y="300" width="542" height="160"/><text class="nt" x="40" y="344">Encoding library</text>
+            <g class="chip" id="c0"><rect x="40" y="366" width="160" height="34" rx="3"/><text x="120" y="388" text-anchor="middle">Angle · β 1</text></g>
+            <g class="chip" id="c1"><rect x="212" y="366" width="160" height="34" rx="3"/><text x="292" y="388" text-anchor="middle">ZZ · β 1</text></g>
+            <g class="chip" id="c2"><rect x="384" y="366" width="160" height="34" rx="3"/><text x="464" y="388" text-anchor="middle">IQP · β 1</text></g>
+            <g class="chip" id="c3"><rect x="40" y="410" width="160" height="34" rx="3"/><text x="120" y="432" text-anchor="middle">ZZ · β 0.5</text></g>
+            <g class="chip" id="c4"><rect x="212" y="410" width="160" height="34" rx="3"/><text x="292" y="432" text-anchor="middle">IQP · β 0.5</text></g>
+            <g class="chip" id="c5"><rect x="384" y="410" width="160" height="34" rx="3"/><text x="464" y="432" text-anchor="middle">ZZ · depth 2</text></g>
+          </g>
+          <text class="ns" x="760" y="250" style="fill:var(--violet);font-weight:700">swap encoding</text>
+          <text class="ns" x="1070" y="250">scores</text>
+          <circle r="7" fill="var(--blue)"><animateMotion dur="3s" repeatCount="indefinite" path="M140 100 H1060"/></circle>
+          <circle r="7" fill="var(--blue)"><animateMotion dur="3s" begin="1.5s" repeatCount="indefinite" path="M140 100 H1060"/></circle>
+        </svg>
+      </div>
+      <p class="arch-note" id="archNote">Hover or focus any block to see what it does.</p>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="sheet" data-title="Choosing an encoding" aria-label="Choosing an encoding">
+    <div class="inner">
+      <h2 class="hl">The controller balances quality against quantum cost</h2>
+      <p class="lead">Each candidate is scored by how well its kernel separates recent data, minus a penalty for the circuit runs it needs. Slide λ to change how much cost matters.</p>
+      <div class="row c32">
+        <div>
+          <div class="controls" style="margin-top:0"><label class="range" for="lam">Cost weight λ <input id="lam" type="range" min="0" max="1" step="0.01" value="0.3"><span class="data" id="lamV">0.30</span></label></div>
+          <div class="lens-list" id="lensList"></div>
+          <div class="legend"><span style="--c:var(--ink2)">net score</span><span style="--c:var(--red)">cost penalty (hatched)</span><span style="--c:var(--green)">chosen</span></div>
+          <p class="note">Illustrative alignment and cost values.</p>
+        </div>
+        <div>
+          <div class="formula">best = argmax over c of [ A(K_c) − λ · cost(c) ]</div>
+          <div class="readouts">
+            <div class="ro green"><small>chosen encoding</small><b id="lensWin" style="font-size:18px">…</b></div>
+            <div class="ro"><small>circuit runs per switch</small><b id="lensCost">…</b></div>
+          </div>
+          <ul class="plain">
+            <li>λ near 0: pick the most accurate, however expensive.</li>
+            <li>λ near 1: pick the cheapest that still works.</li>
+            <li>A mode seen before skips this step and reuses its cached encoding.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="sheet" data-title="Drift lab" aria-label="Drift lab simulation">
+    <div class="inner">
+      <h2 class="hl">Drift lab: break it yourself</h2>
+      <p class="lead">A live, simplified simulation. Inject drift, then switch Q-DRIFT off and on to compare false alarms and quantum cost.</p>
+      <div class="controls">
+        <button class="btn drift" id="labAbrupt">Inject abrupt drift</button>
+        <button class="btn drift" id="labGradual">Inject gradual drift</button>
+        <button class="btn drift" id="labRecur">Inject recurring modes</button>
+        <label class="switch" for="labQD"><input type="checkbox" id="labQD" checked> Q-DRIFT adaptation</label>
+        <div class="seg" role="group" aria-label="Speed"><button id="labS1" aria-pressed="true">1×</button><button id="labS3" aria-pressed="false">3×</button></div>
+        <button class="btn" id="labReset">Reset</button>
+      </div>
+      <div class="plot lab-plot"><canvas id="labPlot" aria-label="Live telemetry simulation with drift and adaptation"></canvas></div>
+      <div class="status" id="labStatus">Monitoring</div>
+      <div class="readouts" style="margin-top:10px">
+        <div class="ro red"><small>false alarms</small><b id="roFA">0</b></div>
+        <div class="ro"><small>faults caught</small><b id="roFC">0 / 0</b></div>
+        <div class="ro violet"><small>encoding switches</small><b id="roSW">0</b></div>
+        <div class="ro"><small>circuit evaluations</small><b id="roCE">0</b></div>
+        <div class="ro green"><small>current encoding</small><b id="roEnc" style="font-size:16px">Angle · β 1</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="sheet" data-title="Evaluation" aria-label="Evaluation plan">
+    <div class="inner">
+      <h2 class="hl">Tested on real missions, scored strictly</h2>
+      <div class="row c2">
+        <div>
+          <div class="plates3">
+            <figure class="plate" style="overflow:hidden"><img class="float" src="%%LAUNCH%%" alt="SMAP launch"><figcaption>SMAP</figcaption></figure>
+            <figure class="plate" style="overflow:hidden"><img class="float" src="%%SELFIE%%" alt="Curiosity rover" style="animation-delay:-2s"><figcaption>Curiosity</figcaption></figure>
+            <figure class="plate" style="overflow:hidden"><img class="float" src="%%DSN%%" alt="Deep Space Network antenna" style="animation-delay:-4s"><figcaption>Deep Space Network</figcaption></figure>
+          </div>
+          <ul class="plain" style="margin-top:14px">
+            <li><b>Drift:</b> natural mode changes plus injected abrupt, gradual and recurring drift.</li>
+            <li><b>Baselines:</b> fixed quantum SVM, statically optimised quantum SVM, classical RBF one-class SVM, online classical model, NASA’s LSTM.</li>
+            <li><b>Metrics:</b> event-level F1, PR-AUC, false alarms per day, detection delay, recovery time, circuit evaluations per sample.</li>
+            <li><b>Fair scoring:</b> no “point-adjust” inflation (Wu and Keogh).</li>
+          </ul>
+          <p class="note">Photos: NASA, NASA/JPL-Caltech/MSSS, NASA/Kim Shiflett. Public domain.</p>
+        </div>
+        <div class="evalchart">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><b>Expected F1 around a drift</b><span class="hyp">Hypothesis, not results</span></div>
+          <svg viewBox="0 0 600 340" id="evalSvg" role="img" aria-label="Expected F1: the fixed model drops after drift at window 4 and stays low; Q-DRIFT recovers">
+            <g class="grid"><line x1="50" y1="30" x2="580" y2="30"/><line x1="50" y1="92" x2="580" y2="92"/><line x1="50" y1="154" x2="580" y2="154"/><line x1="50" y1="216" x2="580" y2="216"/><line x1="50" y1="278" x2="580" y2="278" style="stroke:var(--ink)"/></g>
+            <g class="ax"><text x="42" y="34" text-anchor="end">0.9</text><text x="42" y="96" text-anchor="end">0.8</text><text x="42" y="158" text-anchor="end">0.7</text><text x="42" y="220" text-anchor="end">0.6</text><text x="42" y="282" text-anchor="end">0.5</text>
+              <text x="70" y="302" text-anchor="middle">w1</text><text x="187" y="302" text-anchor="middle">w3</text><text x="304" y="302" text-anchor="middle">w5</text><text x="421" y="302" text-anchor="middle">w7</text><text x="538" y="302" text-anchor="middle">w9</text>
+              <text x="315" y="330" text-anchor="middle">time window</text></g>
+            <line x1="245.5" y1="22" x2="245.5" y2="278" stroke="var(--orange)" stroke-width="2" stroke-dasharray="6 6"/><text x="252" y="22" class="ax" style="fill:var(--orange)">drift</text>
+            <path class="ln" style="--d:0;stroke:var(--red)" pathLength="1" d="M70 67 L128.5 61 L187 73 L245.5 253 L304 265 L362.5 272 L421 278 L479.5 284 L538 272 L580 276"/>
+            <path class="ln" style="--d:1;stroke:var(--green)" pathLength="1" d="M70 67 L128.5 61 L187 73 L245.5 216 L304 135 L362.5 92 L421 80 L479.5 73 L538 80 L580 76"/>
+            <g id="evalHover" style="display:none"><line id="evalX" y1="22" y2="278" stroke="var(--ink)" stroke-width="1"/><circle id="evalA" r="5" fill="var(--red)"/><circle id="evalB" r="5" fill="var(--green)"/><rect id="evalTipBg" width="150" height="50" fill="var(--paper)" stroke="var(--ink)"/><text id="evalTip1" class="tip" fill="var(--red)"></text><text id="evalTip2" class="tip" fill="var(--green)"></text></g>
+            <rect id="evalCatch" x="50" y="20" width="530" height="262" fill="transparent"/>
+          </svg>
+          <div class="legend"><span style="--c:var(--red)">fixed quantum SVM</span><span style="--c:var(--green)">Q-DRIFT</span><span style="--c:transparent">hover the chart to read values</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="sheet" data-title="Team" aria-label="Closing and team details">
+    <div class="inner close-grid">
+      <div>
+        <p class="words" aria-label="Detect. Adapt. Stay affordable."><span style="--i:0">Detect.</span><span style="--i:1">Adapt.</span><span style="--i:2">Stay affordable.</span></p>
+        <p class="title-sub" style="margin-top:18px">Thank you. Questions are welcome.</p>
+        <div class="teamcard">
+          <table>
+            <caption>Team details</caption>
+            <thead><tr><th>Name</th><th>Register number</th></tr></thead>
+            <tbody>
+              <tr><td>Venkatanathan O R V</td><td class="reg">RA2411026011163</td></tr>
+              <tr><td>Mayukh Sarkar</td><td class="reg">RA2411026011218</td></tr>
+              <tr><td>Aman Salarpuria</td><td class="reg">RA2411003012435</td></tr>
+            </tbody>
+          </table>
+          <div style="padding:8px 12px;font-size:13px;color:var(--ink2)">Project: Q-DRIFT, Drift-Aware Quantum Kernel Adaptation for Spacecraft Telemetry Anomaly Detection. LLJ 1 Team Task Review. Faculty: Dr. M. L. Sworna Kokila.</div>
+        </div>
+        <p style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="absBtn2">Read the abstract</button><a class="btn pdfbtn" href="Q-DRIFT_Abstract.pdf" target="_blank" rel="noopener">Open abstract PDF</a></p>
+      </div>
+      <figure class="plate close-plate"><img src="%%AURORA%%" alt="Aurora, city lights and the Moon seen from the International Space Station" style="aspect-ratio:1;object-fit:cover"><figcaption><i>Fig. 5</i> Aurora, Moscow at night and the Moon, seen from the ISS. NASA.</figcaption></figure>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="foot">
+    <nav class="nav" aria-label="Sheets">
+      <button class="arrow" id="prev" aria-label="Previous sheet"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M9 2L4 7l5 5" fill="none" stroke="var(--ink)" stroke-width="2"/></svg></button>
+      <div class="ticks" id="ticks"></div>
+      <button class="arrow" id="next" aria-label="Next sheet"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M5 2l5 5-5 5" fill="none" stroke="var(--ink)" stroke-width="2"/></svg></button>
+    </nav>
+    <div class="tblock" aria-label="Drawing title block">
+      <div><small>Project</small><b>Q-DRIFT, LLJ 1 review</b></div>
+      <div><small>Sheet</small><b class="data" id="sheetNo">01 of 11</b></div>
+      <div><small>Drawn by</small><b>V. O R V, M. Sarkar, A. Salarpuria</b></div>
+    </div>
+  </footer>
+</div>
+
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="absTitle">
+  <article>
+    <button class="tbtn" id="absClose" style="float:right">Close</button>
+    <h3 id="absTitle">Abstract</h3>
+    <p style="color:var(--ink2);margin-top:0">Q-DRIFT: Drift-Aware Quantum Kernel Adaptation for Spacecraft Telemetry Anomaly Detection. Venkatanathan O R V (RA2411026011163), Mayukh Sarkar (RA2411026011218), Aman Salarpuria (RA2411003012435).</p>
+    <p>Spacecraft send a continuous stream of sensor readings, called telemetry, back to Earth. Mission teams rely on anomaly-detection models to flag faults early, but these models are trained on past behaviour. When a spacecraft changes operating mode, or a sensor slowly degrades, the data distribution shifts. This is known as concept drift. A model trained on the old distribution then raises false alarms and can miss real faults.</p>
+    <p>Quantum kernel methods are a promising family of quantum machine learning models for anomaly detection. A quantum feature map encodes each reading into a quantum state, and the kernel measures similarity between states. Their performance depends strongly on this encoding circuit, yet existing work chooses the encoding once, offline, and never revisits it.</p>
+    <p>We propose Q-DRIFT, a drift-aware quantum kernel framework for spacecraft telemetry. A quantum-kernel one-class Support Vector Machine produces anomaly scores from windowed telemetry, reduced by PCA to 4–8 values and encoded on 4–8 simulated qubits. An online drift detector (ADWIN) monitors the stream of scores. When drift is detected, a feature-map controller evaluates a small library of candidate encodings (angle, ZZ and IQP feature maps at several bandwidths and depths) on a rolling window using kernel-target alignment. It then switches to the best candidate after a penalty for quantum circuit cost, without retraining the pipeline from scratch. Encodings that worked for a mode are cached and reused when that mode recurs.</p>
+    <p>We will evaluate Q-DRIFT on the NASA SMAP and Mars Science Laboratory telemetry benchmark (82 channels, 105 expert-labelled anomaly sequences) under natural and injected abrupt, gradual and recurring drift. It will be compared with a fixed quantum SVM, a statically optimised quantum SVM, a classical RBF one-class SVM and an online classical model, using event-level F1, PR-AUC, false alarms, detection delay, recovery time after drift and circuit evaluations per sample. To our knowledge, this is the first drift-adaptive quantum kernel method evaluated on real spacecraft telemetry.</p>
+    <p class="kw"><b>Keywords:</b> quantum machine learning, quantum kernel, quantum support vector machine, concept drift, anomaly detection, spacecraft telemetry, continual learning, NISQ.</p>
+    <p class="kw">The full printable abstract with literature survey, methodology, algorithm and references: <a href="Q-DRIFT_Abstract.pdf" target="_blank" rel="noopener">open the PDF</a>.</p>
+  </article>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const ease = x => 1 - Math.pow(1 - x, 3);
+  const nz = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
+  const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+
+  // ---------- palette from tokens (follows theme) ----------
+  const PAL = {};
+  function readPal(){ const cs = getComputedStyle(document.documentElement); ['ink','ink2','paper','grid','rule','blue','red','orange','violet','green'].forEach(k => PAL[k] = cs.getPropertyValue('--' + k).trim()); }
+  readPal();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readPal);
+  new MutationObserver(readPal).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+  const alpha = (hex, a) => { const h = hex.replace('#',''); const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
+  const FONT = '500 12px "Public Sans", "Segoe UI", sans-serif';
+  const FONTB = '700 12px "Public Sans", "Segoe UI", sans-serif';
+
+  function fit(cv){
+    const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+    const w = Math.max(1, r.width), h = Math.max(1, r.height);
+    const W = Math.round(w * d), H = Math.round(h * d);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const ctx = cv.getContext('2d'); ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, w, h);
+    return {ctx, w, h};
+  }
+  function text(ctx, s, x, y, c, o){ ctx.font = (o && o.bold) ? FONTB : FONT; ctx.fillStyle = c; ctx.textAlign = (o && o.align) || 'left'; ctx.fillText(s, x, y); }
+  function vline(ctx, x, y0, y1, c, dash, lw){ ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = lw || 1.5; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke(); ctx.restore(); }
+  function nib(ctx, x, y, c){ ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, 4.5, 0, 7); ctx.fill(); ctx.strokeStyle = PAL.paper; ctx.lineWidth = 1.5; ctx.stroke(); }
+  function flag(ctx, x, y, c){ ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y + 12); ctx.lineTo(x, y); ctx.stroke(); ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 8, y + 3); ctx.lineTo(x, y + 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
+
+  // ================= modules =================
+  const M = {};
+
+  // ---- 1. hero trace: the whole story in one loop ----
+  M.hero = { frame(t){
+    const cv = $('#heroTrace'); const {ctx, w, h} = fit(cv);
+    const P = 12, p = RM ? 1 : clamp((t % P) / (P * .88), 0, 1);
+    const N = 340, pad = 10, H = h - 18, y0 = 6;
+    const sig = f => (f < .4 ? .66 : .32);
+    const bandC = f => f < .58 ? .66 : f < .63 ? .66 - (f - .58) / .05 * .34 : .32;
+    const Y = v => y0 + v * H, X = f => pad + f * (w - pad * 2);
+    // band
+    ctx.fillStyle = alpha(PAL.blue, .16); ctx.beginPath();
+    for (let j = 0; j < N; j++){ const f = j / (N - 1); if (f > p) break; const y = Y(bandC(f) - .11); j ? ctx.lineTo(X(f), y) : ctx.moveTo(X(f), y); }
+    for (let j = Math.floor(p * (N - 1)); j >= 0; j--){ const f = j / (N - 1); ctx.lineTo(X(f), Y(bandC(f) + .11)); }
+    ctx.closePath(); ctx.fill();
+    // events
+    if (p > .4){ vline(ctx, X(.4), y0, y0 + H, PAL.orange, [5, 5]); text(ctx, 'mode change', X(.4) + 6, y0 + H - 4, PAL.orange, {bold:true}); }
+    if (p > .5){ vline(ctx, X(.5), y0, y0 + H, PAL.red, [], 1.5); text(ctx, 'drift detected', X(.5) + 6, y0 + 12, PAL.red, {bold:true}); }
+    if (p > .5){ ctx.fillStyle = alpha(PAL.violet, .13); ctx.fillRect(X(.5), y0, X(Math.min(p, .58)) - X(.5), H); }
+    if (p > .58){ vline(ctx, X(.58), y0, y0 + H, PAL.green, [], 2.5); text(ctx, 'encoding swapped', X(.58) + 6, y0 + 26, PAL.green, {bold:true}); }
+    // signal + alarms
+    ctx.strokeStyle = PAL.ink; ctx.lineWidth = 1.6; ctx.beginPath(); let hx = 0, hy = 0;
+    for (let j = 0; j < N; j++){ const f = j / (N - 1); if (f > p) break; const v = sig(f) + nz(j) * .045 + Math.sin(j * .4) * .02; hx = X(f); hy = Y(v); j ? ctx.lineTo(hx, hy) : ctx.moveTo(hx, hy);
+      if (f > .4 && f < .6 && j % 7 === 0 && Math.abs(v - bandC(f)) > .11){ ctx.stroke(); flag(ctx, hx, y0 + 30, PAL.red); ctx.beginPath(); ctx.moveTo(hx, hy); } }
+    ctx.stroke(); if (p < 1) nib(ctx, hx, hy, PAL.ink);
+  }};
+
+  // ---- 2. telemetry streams + counters ----
+  M.tele = {
+    enter(){ $$('[data-count]').forEach(el => {
+      const target = +el.dataset.count, fmt = el.dataset.fmt;
+      const show = v => el.textContent = fmt === 'k' ? Math.round(v / 1000) + 'k' : String(Math.round(v));
+      if (RM) return show(target);
+      const st = performance.now(); const tick = now => { const k = clamp((now - st) / 1400, 0, 1); show(target * ease(k)); if (k < 1) requestAnimationFrame(tick); }; requestAnimationFrame(tick); }); },
+    frame(t){ $$('canvas[data-stream]').forEach(cv => {
+      const seed = +cv.dataset.stream; const {ctx, w, h} = fit(cv); const off = t * 28; const step = 3;
+      ctx.strokeStyle = alpha(PAL.blue, .25); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+      ctx.strokeStyle = PAL.blue; ctx.lineWidth = 1.6; ctx.beginPath(); let lx = 0, ly = 0;
+      for (let x = 0; x <= w; x += step){ const i = Math.floor(off) + x / step; let y = h / 2 + (Math.sin(i * .09 + seed) * .22 + Math.sin(i * .31 + seed * 2) * .08 + nz(i + seed * 1000) * .1) * h;
+        const spike = ((i + seed * 37) % 260) < 3; if (spike) y = h * .12; lx = x; ly = y; x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        if (spike){ ctx.stroke(); ctx.fillStyle = PAL.red; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(x, y); } }
+      ctx.stroke(); nib(ctx, lx, ly, PAL.blue);
+    }); }
+  };
+
+  // ---- 3. problem: fixed model under three drift types ----
+  let probType = 'abrupt', probT0 = 0;
+  M.prob = {
+    enter(){ probT0 = performance.now(); },
+    frame(){
+      const cv = $('#problemPlot'); const {ctx, w, h} = fit(cv);
+      const t = (performance.now() - probT0) / 1000; const p = RM ? 1 : clamp(t / 8, 0, 1);
+      const pad = 14, y0 = 40, H = h - y0 - 26, X = f => pad + f * (w - pad * 2), Y = v => y0 + v * H;
+      const base = .68, bh = .1;
+      const mean = f => { if (probType === 'abrupt') return f < .38 ? base : .3; if (probType === 'gradual') return f < .25 ? base : f > .8 ? .3 : base - (f - .25) / .55 * .38; return Math.floor((f - .3) / .14) % 2 === 0 && f > .3 ? .3 : base; };
+      // rail
+      ctx.strokeStyle = PAL.rule; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pad, y0 - 18); ctx.lineTo(w - pad, y0 - 18); ctx.stroke();
+      text(ctx, 'alarms raised by the fixed model', pad, y0 - 24, PAL.ink2);
+      ctx.fillStyle = alpha(PAL.blue, .14); ctx.fillRect(pad, Y(base - bh), w - pad * 2, (2 * bh) * H);
+      ctx.strokeStyle = PAL.blue; ctx.setLineDash([6, 5]); ctx.lineWidth = 1.2; [base - bh, base + bh].forEach(v => { ctx.beginPath(); ctx.moveTo(pad, Y(v)); ctx.lineTo(w - pad, Y(v)); ctx.stroke(); }); ctx.setLineDash([]);
+      text(ctx, 'normal, as learned', pad + 4, Y(base + bh) + 16, PAL.blue, {bold:true});
+      const onset = probType === 'abrupt' ? .38 : probType === 'gradual' ? .25 : .3;
+      if (p > onset){ vline(ctx, X(onset), y0 - 10, y0 + H, PAL.orange, [6, 5]); text(ctx, probType === 'gradual' ? 'slow drift begins' : 'mode change', X(onset) + 6, y0 + H - 4, PAL.orange, {bold:true}); }
+      const N = 300; ctx.strokeStyle = PAL.ink; ctx.lineWidth = 1.7; ctx.beginPath(); let hx = 0, hy = 0, fault = null, flags = 0;
+      for (let j = 0; j < N; j++){ const f = j / (N - 1); if (f > p) break; let v = mean(f) + nz(j * 3 + 1) * .035 + Math.sin(j * .3) * .015;
+        if (f > .84 && f < .855) { v = .06; fault = [X(f), Y(v)]; }
+        hx = X(f); hy = Y(v); j ? ctx.lineTo(hx, hy) : ctx.moveTo(hx, hy);
+        if (j % 6 === 0 && Math.abs(v - base) > bh + .02 && !(f > .84 && f < .855)) { ctx.stroke(); flag(ctx, hx, y0 - 30, PAL.red); flags++; ctx.beginPath(); ctx.moveTo(hx, hy); } }
+      ctx.stroke(); if (p < 1) nib(ctx, hx, hy, PAL.ink);
+      if (fault && p > .86){ ctx.strokeStyle = PAL.red; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(fault[0], fault[1] + 3, 15, 0, 7); ctx.stroke(); text(ctx, 'real fault, lost among false alarms', fault[0] - 22, fault[1] + 8, PAL.red, {bold:true, align:'right'}); }
+      text(ctx, flags + ' false alarm flags', w - pad, y0 - 24, PAL.red, {bold:true, align:'right'});
+    }
+  };
+  $$('[data-drift]').forEach(b => b.addEventListener('click', () => { probType = b.dataset.drift; $$('[data-drift]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); probT0 = performance.now(); }));
+  $('#pReplay').addEventListener('click', () => probT0 = performance.now());
+
+  // ---- 4. kernel lab ----
+  const ENC = {angle:{best:1.0, max:.62, name:'Angle'}, zz:{best:.5, max:.86, name:'ZZ'}, iqp:{best:.7, max:.69, name:'IQP'}};
+  let kEnc = 'zz';
+  const kPts = (() => { const a = []; for (let i = 0; i < 16; i++){ const ang = (nz(i) + 1) * Math.PI, r = Math.abs(nz(i + 40)) * .12; a.push({c:'blue', ax:Math.cos(ang) * r, ay:Math.sin(ang) * r, bx:-.4 + i * .053, by:-.22 + nz(i + 90) * .05}); }
+    for (let i = 0; i < 22; i++){ const ang = i / 22 * Math.PI * 2, r = .34 + nz(i + 200) * .025; a.push({c:'red', ax:Math.cos(ang) * r, ay:Math.sin(ang) * r, bx:-.42 + i * .04, by:.22 + nz(i + 400) * .05}); }
+    a.forEach(q => { q.x = q.ax; q.y = q.ay; }); return a; })();
+  function kModel(){ const e = ENC[kEnc], b = +$('#kBw').value; const s = e.max * Math.exp(-Math.pow(Math.log(b / e.best), 2) / .7); const conc = clamp((b - 1.25) / .6, 0, 1); return {s, conc, b}; }
+  function kUpdateText(){ const {s, conc, b} = kModel(); $('#kBwV').textContent = b.toFixed(2); const a = s * (1 - .85 * conc); $('#kAlign').textContent = a.toFixed(2);
+    $('#kState').textContent = conc > .4 ? 'Values concentrate: the kernel flattens' : s > .7 ? 'Well separated: this encoding fits' : s > .45 ? 'Partly separated' : 'Tangled: wrong encoding or bandwidth'; }
+  $$('[data-enc]').forEach(b => b.addEventListener('click', () => { kEnc = b.dataset.enc; $$('[data-enc]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); kUpdateText(); }));
+  $('#kBw').addEventListener('input', kUpdateText); kUpdateText();
+  M.kernel = { frame(){
+    const {s, conc} = kModel(); const m = clamp(s / .86, 0, 1), shrink = 1 - .8 * conc;
+    const cv = $('#kPts'); const {ctx, w, h} = fit(cv); const cx = w / 2, cy = h / 2, R = Math.min(w, h);
+    if (m > .55 && conc < .5){ ctx.save(); ctx.globalAlpha = (m - .55) / .45 * (1 - conc); ctx.strokeStyle = PAL.ink; ctx.setLineDash([7, 6]); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(w * .06, cy); ctx.lineTo(w * .94, cy); ctx.stroke(); ctx.restore(); }
+    kPts.forEach(q => { const tx = ((1 - m) * q.ax * R * .95 + m * q.bx * w) * shrink, ty = ((1 - m) * q.ay * R * .95 + m * q.by * h * 1.5) * shrink;
+      const k = RM ? 1 : .1; q.x += (tx - q.x) * k; q.y += (ty - q.y) * k;
+      ctx.fillStyle = q.c === 'blue' ? PAL.blue : PAL.red; ctx.beginPath(); ctx.arc(cx + q.x, cy + q.y, Math.max(3.5, R * .014), 0, 7); ctx.fill(); });
+    // heatmap
+    const hv = $('#kHm'); const g = fit(hv); const n = 14, cell = Math.min(g.w, g.h) / n;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++){
+      const same = (i < 7) === (j < 7); let v = i === j ? 1 : same ? .55 + .4 * m : .5 - .42 * m; v = v + (.96 - v) * conc; v += nz(i * 31 + j) * .03 * (1 - conc);
+      g.ctx.fillStyle = alpha(PAL.violet, clamp(v, .04, 1)); g.ctx.fillRect(j * cell + .5, i * cell + .5, cell - 1, cell - 1); }
+  }};
+
+  // ---- 5. gap matrix ----
+  $$('.matrix thead button').forEach(b => b.addEventListener('click', () => {
+    const on = b.getAttribute('aria-pressed') !== 'true';
+    $$('.matrix thead button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    b.setAttribute('aria-pressed', String(on)); const col = +b.dataset.col;
+    $$('.matrix tbody tr').forEach(tr => { const v = tr.dataset.v.split(',').map(Number); tr.classList.toggle('dim', on && v[col - 1] === 0); });
+  }));
+
+  // ---- 6. idea: two lanes with a scrubber ----
+  let ideaAuto = true, ideaPos = 0, ideaLast = 0;
+  const IDEA = {drift:.33, detect:.41, sw:.56};
+  const scoreFixed = f => f < IDEA.drift ? .22 : .22 + clamp((f - IDEA.drift) / .04, 0, 1) * .5;
+  const scoreQD = f => f < IDEA.drift ? .22 : f < IDEA.sw ? .22 + clamp((f - IDEA.drift) / .04, 0, 1) * .5 : .72 - clamp((f - IDEA.sw) / .04, 0, 1) * .5;
+  M.idea = {
+    enter(){ ideaLast = performance.now(); },
+    frame(){
+      const now = performance.now(); const dt = (now - ideaLast) / 1000; ideaLast = now;
+      if (ideaAuto && !RM){ ideaPos += dt / 11; if (ideaPos > 1.12) ideaPos = 0; $('#ideaScrub').value = String(Math.round(clamp(ideaPos, 0, 1) * 1000)); }
+      if (RM && ideaAuto) ideaPos = 1;
+      const p = clamp(ideaPos, 0, 1); $('#ideaT').textContent = 't = ' + Math.round(p * 100) + '%';
+      const cv = $('#ideaPlot'); const {ctx, w, h} = fit(cv);
+      const pad = 14, lane = (h - 30) / 2, X = f => pad + 120 + f * (w - pad * 2 - 120);
+      const N = 260; let fa1 = 0, fa2 = 0;
+      [['Fixed QSVM', scoreFixed, 0, PAL.red], ['Q-DRIFT', scoreQD, 1, PAL.green]].forEach(([name, fn, k, col]) => {
+        const y0 = 10 + k * (lane + 10), Y = v => y0 + (1 - v) * (lane - 10) + 4;
+        ctx.strokeStyle = PAL.rule; ctx.lineWidth = 1; ctx.strokeRect(X(0), y0, X(1) - X(0), lane);
+        text(ctx, name, pad, y0 + 20, col, {bold:true}); text(ctx, 'anomaly score', pad, y0 + 38, PAL.ink2);
+        ctx.strokeStyle = PAL.red; ctx.setLineDash([6, 5]); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(X(0), Y(.45)); ctx.lineTo(X(1), Y(.45)); ctx.stroke(); ctx.setLineDash([]);
+        if (k === 0) text(ctx, 'alarm threshold', X(1) - 4, Y(.45) - 6, PAL.red, {align:'right'});
+        if (p > IDEA.drift) vline(ctx, X(IDEA.drift), y0, y0 + lane, PAL.orange, [5, 5]);
+        if (k === 1){
+          if (p > IDEA.detect){ vline(ctx, X(IDEA.detect), y0, y0 + lane, PAL.red); text(ctx, 'detected', X(IDEA.detect) + 5, y0 + 14, PAL.red, {bold:true}); }
+          if (p > IDEA.detect){ ctx.fillStyle = alpha(PAL.violet, .14); ctx.fillRect(X(IDEA.detect), y0, X(Math.min(p, IDEA.sw)) - X(IDEA.detect), lane); text(ctx, 'testing encodings', X(IDEA.detect) + 5, y0 + 30, PAL.violet, {bold:true}); }
+          if (p > IDEA.sw){ vline(ctx, X(IDEA.sw), y0, y0 + lane, PAL.green, [], 2.5); text(ctx, 'switched to ZZ · β 0.5', X(IDEA.sw) + 6, y0 + 14, PAL.green, {bold:true}); }
+        } else if (p > IDEA.drift) text(ctx, 'mode change', X(IDEA.drift) + 5, y0 + 14, PAL.orange, {bold:true});
+        ctx.strokeStyle = PAL.ink; ctx.lineWidth = 1.6; ctx.beginPath(); let hx = 0, hy = 0;
+        for (let j = 0; j < N; j++){ const f = j / (N - 1); if (f > p) break; const v = fn(f) + nz(j * 5 + k * 99) * .05; hx = X(f); hy = Y(v); j ? ctx.lineTo(hx, hy) : ctx.moveTo(hx, hy);
+          if (j % 8 === 0 && v > .45){ if (k === 0) fa1++; else fa2++; ctx.stroke(); flag(ctx, hx, y0 + lane - 16, PAL.red); ctx.beginPath(); ctx.moveTo(hx, hy); } }
+        ctx.stroke(); nib(ctx, hx, hy, col);
+      });
+      $('#ideaFA1').textContent = fa1; $('#ideaFA2').textContent = fa2; $('#ideaEnc').textContent = p > IDEA.sw ? 'ZZ · β 0.5' : 'Angle · β 1';
+    }
+  };
+  $('#ideaScrub').addEventListener('input', e => { ideaAuto = false; ideaPos = +e.target.value / 1000; const b = $('#ideaPlay'); b.textContent = 'Play'; b.setAttribute('aria-pressed', 'false'); });
+  $('#ideaPlay').addEventListener('click', e => { ideaAuto = !ideaAuto; if (ideaAuto && ideaPos >= 1) ideaPos = 0; e.target.textContent = ideaAuto ? 'Pause' : 'Play'; e.target.setAttribute('aria-pressed', String(ideaAuto)); });
+
+  // ---- 7. architecture run ----
+  const archNote = $('#archNote');
+  $$('.arch .node').forEach(n => { const show = () => archNote.textContent = n.dataset.note; n.addEventListener('mouseenter', show); n.addEventListener('focus', show); });
+  let archBusy = false;
+  const wait = ms => new Promise(r => setTimeout(r, RM ? Math.min(ms, 60) : ms));
+  $('#archRun').addEventListener('click', async () => {
+    if (archBusy) return; archBusy = true; const btn = $('#archRun'); btn.disabled = true;
+    const nodes = ['#nDet', '#nCtl', '#nQ', '#nAl'].map(s => $(s)); nodes.forEach(n => n.classList.remove('lit-orange', 'lit-violet', 'lit-green'));
+    $$('.arch .chip').forEach(c => c.classList.remove('scan', 'win'));
+    $('#nAl').classList.add('lit-orange'); $('#wScore').classList.add('hot'); archNote.textContent = 'The spacecraft changes mode. Scores rise and alarms start.'; await wait(900);
+    $('#nDet').classList.add('lit-orange'); $('#wDrift').classList.add('hot'); archNote.textContent = 'ADWIN sees the mean of recent scores shift and flags drift.'; await wait(900);
+    $('#nCtl').classList.add('lit-violet'); $('#nCtlS').textContent = 'testing encodings'; archNote.textContent = 'The controller scores every encoding in the library on recent data.';
+    const order = [0, 1, 2, 3, 4, 5, 3];
+    for (let k = 0; k < order.length; k++){ $$('.arch .chip').forEach(c => c.classList.remove('scan')); $('#c' + order[k]).classList.add('scan'); await wait(260); }
+    $$('.arch .chip').forEach(c => c.classList.remove('scan')); $('#c3').classList.add('win'); $('#nCtlS').textContent = 'chose ZZ · β 0.5';
+    archNote.textContent = 'ZZ at bandwidth 0.5 has the best alignment after the cost penalty.'; await wait(700);
+    $('#wSwap').classList.add('hot'); $('#nQ').classList.add('lit-green'); $('#nQenc').textContent = 'encoding: ZZ · β 0.5'; await wait(800);
+    $('#wSwap').classList.remove('hot'); $('#wScore').classList.remove('hot'); $('#wDrift').classList.remove('hot'); $('#nAl').classList.remove('lit-orange'); $('#nDet').classList.remove('lit-orange');
+    archNote.textContent = 'Scores fall back below the threshold. No full retraining was needed.';
+    btn.textContent = 'Run again'; btn.disabled = false; archBusy = false;
+  });
+
+  // ---- 8. lens ranking ----
+  const LENS = [{n:'Angle · β 1', a:.62, c:.20, runs:'3.6k'}, {n:'ZZ · β 1', a:.71, c:.45, runs:'8.1k'}, {n:'IQP · β 1', a:.58, c:.60, runs:'10.8k'}, {n:'ZZ · β 0.5', a:.86, c:.45, runs:'8.1k'}, {n:'IQP · β 0.5', a:.69, c:.60, runs:'10.8k'}, {n:'ZZ · β 0.5 · depth 2', a:.90, c:.90, runs:'16.2k'}];
+  const list = $('#lensList');
+  LENS.forEach((L, i) => { const el = document.createElement('div'); el.className = 'lens-item'; el.innerHTML = `<span class="nm"></span><span class="bar"><i></i><u></u></span><span class="val"></span>`; el.querySelector('.nm').textContent = L.n; L.el = el; list.appendChild(el); });
+  function lensUpdate(){ const lam = +$('#lam').value; $('#lamV').textContent = lam.toFixed(2);
+    LENS.forEach(L => L.net = L.a - lam * L.c); const ranked = [...LENS].sort((p, q) => q.net - p.net);
+    ranked.forEach((L, r) => { L.el.style.transform = `translateY(${r * 54}px)`; L.el.classList.toggle('win', r === 0);
+      L.el.querySelector('i').style.transform = `scaleX(${clamp(L.net, 0, 1)})`; const u = L.el.querySelector('u'); u.style.left = (clamp(L.net, 0, 1) * 100) + '%'; u.style.width = (clamp(lam * L.c, 0, 1 - clamp(L.net, 0, 1)) * 100) + '%';
+      L.el.querySelector('.val').textContent = L.net.toFixed(2); });
+    $('#lensWin').textContent = ranked[0].n; $('#lensCost').textContent = ranked[0].runs; }
+  $('#lam').addEventListener('input', lensUpdate); lensUpdate();
+
+  // ---- 9. drift lab simulation ----
+  const ENCS = ['Angle · β 1', 'ZZ · β 0.5', 'IQP · β 0.5', 'ZZ · β 1', 'IQP · β 1', 'ZZ · depth 2'];
+  const S = {};
+  function labReset(){ Object.assign(S, {tick:0, mu:0, target:0, ramp:0, rampStep:0, sched:[], hist:[], bc:0, hw:1.0, state:'monitor', stateT:0, cache:[], enc:ENCS[0], fa:0, faults:0, caught:0, sw:0, ce:0, inAlarm:false, fault:0, faultHit:false, demo:true, demoNext:200, demoK:0, events:[]});
+    S.cache.push({sig:0, enc:ENCS[0]}); S.demo = false; for (let k = 0; k < 640; k++) step(); S.demo = true; S.demoNext = S.tick + 150; labStatus('Monitoring', PAL.blue); }
+  function labStatus(s, c){ const el = $('#labStatus'); el.textContent = s; el.style.setProperty('--status', c || PAL.blue); }
+  function inject(kind, user){ if (user) S.demo = false; const lv = [0, 2.6, -2.2, 1.4]; const pick = () => { let v; do { v = lv[Math.floor(Math.random() * lv.length)]; } while (Math.abs(v - S.target) < .8); return v; };
+    if (kind === 'abrupt'){ S.target = pick(); S.mu = S.target; S.ramp = 0; S.events.push({t:S.tick, k:'drift', l:'abrupt drift'}); }
+    else if (kind === 'gradual'){ const tg = pick(); S.ramp = 160; S.rampStep = (tg - S.mu) / 160; S.target = tg; S.events.push({t:S.tick, k:'drift', l:'gradual drift'}); }
+    else { const a = S.mu, b = pick(); S.sched = []; for (let k = 1; k <= 6; k++) S.sched.push({t:S.tick + k * 190, v:k % 2 ? b : a}); S.mu = b; S.target = b; S.events.push({t:S.tick, k:'drift', l:'recurring modes'}); } }
+  function step(){
+    S.tick++; const t = S.tick;
+    if (S.demo && t >= S.demoNext){ inject(['abrupt', 'recurring', 'gradual'][S.demoK % 3], false); S.demoK++; S.demoNext = t + (S.demoK % 3 === 2 ? 1400 : 800); }
+    if (S.ramp > 0){ S.mu += S.rampStep; S.ramp--; }
+    if (S.sched.length && S.sched[0].t === t){ const e = S.sched.shift(); S.mu = e.v; S.target = e.v; S.events.push({t, k:'drift', l:'mode returns'}); }
+    if (S.fault > 0) S.fault--; else if (Math.random() < 1 / 420 && t > 60){ S.fault = 10; S.faults++; S.faultHit = false; S.faultSign = Math.random() < .5 ? 1 : -1; }
+    const x = S.mu + gauss() * .33 + (S.fault > 0 ? 2.4 * S.faultSign : 0);
+    const score = Math.abs(x - S.bc); const alarm = score > 1.3;
+    if (alarm && !S.inAlarm){ if (S.fault > 0){ if (!S.faultHit){ S.caught++; S.faultHit = true; } } else S.fa++; }
+    if (alarm && S.fault > 0 && !S.faultHit){ S.caught++; S.faultHit = true; }
+    S.inAlarm = alarm; S.ce += 60;
+    const qd = $('#labQD').checked;
+    // detector + controller
+    const recent = S.hist.slice(-24), older = S.hist.slice(-100, -24);
+    if (qd && S.state === 'monitor' && older.length > 50){
+      const frac = recent.filter(r => r.s > .9).length / recent.length, fracOld = older.filter(r => r.s > .9).length / older.length;
+      if (frac > .75 && fracOld < .6){ S.state = 'detected'; S.stateT = t; S.events.push({t, k:'detect', l:'drift detected'}); labStatus('ADWIN flags drift: recent scores shifted', PAL.red); } }
+    if (S.state === 'detected' && t - S.stateT > 8){ const sig = S.hist.slice(-20).reduce((a, r) => a + r.x, 0) / 20; const hit = S.cache.find(c => Math.abs(c.sig - sig) < .45);
+      S.state = 'testing'; S.stateT = t; S.testLen = hit ? 10 : 46; S.hit = hit; S.events.push({t, k:'test', l:hit ? 'cache hit' : 'testing 18 encodings'});
+      labStatus(hit ? 'Mode seen before: reusing cached encoding ' + hit.enc : 'Testing 18 candidate encodings on recent data', PAL.violet); }
+    if (S.state === 'testing' && t - S.stateT >= S.testLen){ const sig = S.hist.slice(-30).reduce((a, r) => a + r.x, 0) / 30; S.bc = sig;
+      if (S.hit){ S.enc = S.hit.enc; S.ce += 900; } else { let e; do { e = ENCS[Math.floor(Math.random() * ENCS.length)]; } while (e === S.enc); S.enc = e; S.cache.push({sig, enc:e}); S.ce += 16200; }
+      S.sw++; S.state = 'cool'; S.stateT = t; S.events.push({t, k:'switch', l:'→ ' + S.enc}); labStatus('Switched to ' + S.enc + '. Scores back to normal.', PAL.green); }
+    if (S.state === 'cool' && t - S.stateT > 90){ S.state = 'monitor'; labStatus('Monitoring', PAL.blue); }
+    if (!qd && S.state !== 'monitor'){ S.state = 'monitor'; }
+    S.hist.push({x, bc:S.bc, s:score, alarm, fault:S.fault > 0, test:S.state === 'testing'});
+    if (S.hist.length > 2400) S.hist.splice(0, S.hist.length - 2400);
+    S.events = S.events.filter(e => e.t > t - 700);
+  }
+  let labSpeed = 1;
+  $('#labAbrupt').addEventListener('click', () => inject('abrupt', true));
+  $('#labGradual').addEventListener('click', () => inject('gradual', true));
+  $('#labRecur').addEventListener('click', () => inject('recurring', true));
+  $('#labReset').addEventListener('click', () => { labReset(); });
+  $('#labQD').addEventListener('change', e => { S.demo = false; labStatus(e.target.checked ? 'Q-DRIFT adaptation on' : 'Adaptation off: the model keeps its old normal', e.target.checked ? PAL.green : PAL.red); });
+  [['#labS1', 1], ['#labS3', 3]].forEach(([id, v]) => $(id).addEventListener('click', () => { labSpeed = v; $('#labS1').setAttribute('aria-pressed', String(v === 1)); $('#labS3').setAttribute('aria-pressed', String(v === 3)); }));
+  labReset();
+  const fmtN = n => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n);
+  M.lab = { frame(){
+    for (let k = 0; k < labSpeed; k++) step();
+    const cv = $('#labPlot'); const {ctx, w, h} = fit(cv);
+    const Wn = 620, pad = 12, y0 = 34, H = h - y0 - 14; const hist = S.hist.slice(-Wn); const off = Wn - hist.length;
+    const X = i => pad + (i + off) / (Wn - 1) * (w - pad * 2), Y = v => y0 + (1 - (v + 4.2) / 8.4) * H;
+    const tick0 = S.tick - hist.length + 1;
+    ctx.strokeStyle = PAL.rule; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pad, y0 - 12); ctx.lineTo(w - pad, y0 - 12); ctx.stroke();
+    // test windows
+    ctx.fillStyle = alpha(PAL.violet, .14); hist.forEach((r, i) => { if (r.test) ctx.fillRect(X(i) - 1, y0, (w - pad * 2) / Wn + 2, H); });
+    // band
+    ctx.fillStyle = alpha(PAL.blue, .16); ctx.beginPath(); hist.forEach((r, i) => { const y = Y(r.bc + 1.3); i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); });
+    for (let i = hist.length - 1; i >= 0; i--) ctx.lineTo(X(i), Y(hist[i].bc - 1.3)); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = alpha(PAL.blue, .7); ctx.lineWidth = 1; ctx.setLineDash([5, 4]); ctx.beginPath(); hist.forEach((r, i) => { const y = Y(r.bc); i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); }); ctx.stroke(); ctx.setLineDash([]);
+    // events
+    S.events.forEach(e => { const i = e.t - tick0; if (i < 0) return; const x = X(i); const c = e.k === 'drift' ? PAL.orange : e.k === 'detect' ? PAL.red : e.k === 'test' ? PAL.violet : PAL.green;
+      vline(ctx, x, y0, y0 + H, c, e.k === 'drift' ? [5, 5] : [], e.k === 'switch' ? 2.5 : 1.5); text(ctx, e.l, x + 5, y0 + (e.k === 'drift' ? H - 6 : e.k === 'detect' ? 14 : e.k === 'test' ? 30 : 46), c, {bold:true}); });
+    // signal
+    ctx.strokeStyle = PAL.ink; ctx.lineWidth = 1.4; ctx.beginPath(); let hx = 0, hy = 0;
+    hist.forEach((r, i) => { hx = X(i); hy = Y(r.x); i ? ctx.lineTo(hx, hy) : ctx.moveTo(hx, hy); }); ctx.stroke();
+    // alarms + faults
+    hist.forEach((r, i) => { if (r.alarm && (i % 3 === 0)) { ctx.fillStyle = PAL.red; ctx.fillRect(X(i) - 1, y0 - 20, 2, 9); } if (r.fault && i % 4 === 0){ ctx.strokeStyle = PAL.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(i), Y(r.x), 6, 0, 7); ctx.stroke(); } });
+    text(ctx, 'alarms', pad, y0 - 22, PAL.ink2);
+    if (hist.length) nib(ctx, hx, hy, PAL.ink);
+    $('#roFA').textContent = S.fa; $('#roFC').textContent = S.caught + ' / ' + S.faults; $('#roSW').textContent = S.sw; $('#roCE').textContent = fmtN(S.ce); $('#roEnc').textContent = $('#labQD').checked ? S.enc : S.enc + ' (frozen)';
+  }};
+
+  // ---- 10. eval chart hover ----
+  const EV = {xs:[70, 128.5, 187, 245.5, 304, 362.5, 421, 479.5, 538, 580], a:[.82,.83,.81,.52,.50,.49,.48,.47,.49,.48], b:[.82,.83,.81,.58,.71,.78,.80,.81,.80,.81]};
+  const yv = v => 278 - (v - .5) / .4 * 248;
+  const svg = $('#evalSvg');
+  function evHover(e){ const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    let k = 0, best = 1e9; EV.xs.forEach((x, i) => { const d = Math.abs(x - loc.x); if (d < best){ best = d; k = i; } });
+    const x = EV.xs[k]; $('#evalHover').style.display = ''; $('#evalX').setAttribute('x1', x); $('#evalX').setAttribute('x2', x);
+    $('#evalA').setAttribute('cx', x); $('#evalA').setAttribute('cy', yv(EV.a[k])); $('#evalB').setAttribute('cx', x); $('#evalB').setAttribute('cy', yv(EV.b[k]));
+    const tx = x > 420 ? x - 160 : x + 10; $('#evalTipBg').setAttribute('x', tx); $('#evalTipBg').setAttribute('y', 30);
+    const t1 = $('#evalTip1'), t2 = $('#evalTip2'); t1.setAttribute('x', tx + 8); t1.setAttribute('y', 50); t2.setAttribute('x', tx + 8); t2.setAttribute('y', 70);
+    t1.textContent = `w${k + 1} fixed  ${EV.a[k].toFixed(2)}`; t2.textContent = `w${k + 1} Q-DRIFT ${EV.b[k].toFixed(2)}`; }
+  $('#evalCatch').addEventListener('mousemove', evHover); $('#evalCatch').addEventListener('touchstart', e => evHover(e.touches[0]), {passive:true});
+  $('#evalCatch').addEventListener('mouseleave', () => $('#evalHover').style.display = 'none');
+
+  // ================= sheet controller =================
+  const sheets = $$('.sheet'); const order = ['hero', 'tele', 'prob', 'kernel', null, 'idea', null, null, 'lab', null, null];
+  const ticks = $('#ticks');
+  sheets.forEach((s, i) => { const b = document.createElement('button'); b.setAttribute('aria-label', 'Sheet ' + (i + 1) + ': ' + s.dataset.title); b.title = s.dataset.title; b.textContent = String(i + 1).padStart(2, '0'); b.addEventListener('click', () => go(i)); ticks.appendChild(b); });
+  let cur = 0, t0 = performance.now(), raf = 0;
+  function hud(){ $('#where').textContent = sheets[cur].dataset.title; $('#sheetNo').textContent = String(cur + 1).padStart(2, '0') + ' of ' + String(sheets.length).padStart(2, '0');
+    [...ticks.children].forEach((b, i) => { b.classList.toggle('cur', i === cur); b.classList.toggle('done', i < cur); if (i === cur) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); }); }
+  function go(i){ i = clamp(i, 0, sheets.length - 1); if (i === cur) return;
+    sheets[cur].classList.remove('on'); sheets[cur].style.setProperty('--lift', (i > cur ? -10 : 10) + 'px');
+    cur = i; const s = sheets[i]; s.style.setProperty('--lift', '10px'); s.scrollTop = 0; void s.offsetWidth; s.classList.add('on');
+    const m = M[order[i]]; if (m && m.enter) m.enter(); hud(); t0 = performance.now(); }
+  function loop(now){ const m = M[order[cur]]; if (m && m.frame) m.frame((now - t0) / 1000); raf = requestAnimationFrame(loop); }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAnimationFrame(raf); else raf = requestAnimationFrame(loop); });
+  $('#next').addEventListener('click', () => go(cur + 1)); $('#prev').addEventListener('click', () => go(cur - 1));
+  const drawer = $('#drawer');
+  const openAbs = () => { drawer.classList.add('open'); $('#absClose').focus(); }; const closeAbs = () => { drawer.classList.remove('open'); $('#absBtn').focus(); };
+  $('#absBtn').addEventListener('click', openAbs); $('#absBtn2').addEventListener('click', openAbs); $('#absClose').addEventListener('click', closeAbs);
+  drawer.addEventListener('click', e => { if (e.target === drawer) closeAbs(); });
+  $('#fsBtn').addEventListener('click', () => { const p = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); p && p.catch && p.catch(() => {}); });
+  addEventListener('keydown', e => {
+    if (drawer.classList.contains('open')){ if (e.key === 'Escape') closeAbs(); return; }
+    const tag = (e.target.tagName || '').toLowerCase(); if (tag === 'input') return;
+    if (['ArrowRight', 'PageDown'].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(cur - 1); }
+    else if (e.key === 'Home') go(0); else if (e.key === 'End') go(sheets.length - 1);
+    else if (e.key === 'f' || e.key === 'F') $('#fsBtn').click(); else if (e.key === 'a' || e.key === 'A') openAbs();
+  });
+  let sx = null, sy = null; const stage = $('#stage');
+  stage.addEventListener('touchstart', e => { if (e.target.closest('input,canvas,.matrix')) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+  stage.addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) go(cur + (dx < 0 ? 1 : -1)); sx = null; }, {passive:true});
+
+  function start(data){
+    const m = /^s(\d+)$/.exec(location.hash.slice(1)); const init = data && Number.isInteger(data.cur) ? data.cur : m ? +m[1] - 1 : 0;
+    hud(); if (init > 0) go(init); raf = requestAnimationFrame(loop);
+  }
+  addEventListener('hashchange', () => { const m = /^s(\d+)$/.exec(location.hash.slice(1)); if (m) go(+m[1] - 1); });
+  window.claude?.hot?.snapshot?.(() => ({cur}));
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>

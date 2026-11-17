@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Q-DRIFT Project Abstract</title>
+<style>
+@page { size: A4; margin: 20mm 18mm 20mm 20mm;
+  @top-right { content: "Q-DRIFT \00B7  LLJ 1 Team Task Review"; font: italic 9pt "Times New Roman", serif; color: #555; }
+  @bottom-center { content: "Page " counter(page) " of " counter(pages); font: 9pt "Times New Roman", serif; color: #555; } }
+@page :first { @top-right { content: none; } }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: "Times New Roman", Times, serif; font-size: 11.5pt; line-height: 1.42; color: #111; margin: 0; }
+h1 { font-size: 19pt; line-height: 1.2; text-align: center; margin: 6pt 0 4pt; }
+.inst { text-align: center; font-size: 12pt; font-weight: bold; letter-spacing: .02em; margin: 0; }
+.sub { text-align: center; font-size: 11.5pt; margin: 2pt 0 12pt; font-style: italic; }
+h2 { font-size: 13pt; margin: 14pt 0 5pt; padding-bottom: 2pt; border-bottom: 1px solid #999; break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 9pt 0 3pt; break-after: avoid; }
+p { margin: 0 0 6pt; text-align: justify; hyphens: auto; }
+ul, ol { margin: 0 0 6pt; padding-left: 20pt; } li { margin: 1.5pt 0; text-align: justify; }
+table { width: 100%; border-collapse: collapse; margin: 4pt 0 4pt; font-size: 10.5pt; break-inside: auto; }
+tr { break-inside: avoid; } thead { display: table-header-group; }
+th, td { border: 1px solid #555; padding: 3.5pt 6pt; vertical-align: top; text-align: left; }
+th { background: #E9EDF3; font-weight: bold; }
+.cap { font-size: 10pt; text-align: center; margin: 3pt 0 10pt; font-style: italic; }
+.meta td:first-child { width: 28%; font-weight: bold; background: #F4F6F9; }
+.team th, .team td { text-align: center; }
+.abstract { border: 1px solid #555; padding: 9pt 12pt 6pt; margin: 6pt 0 8pt; background: #FAFBFC; }
+.abstract h2 { border: 0; margin-top: 0; text-align: center; }
+.kw { font-size: 10.5pt; }
+.eq { display: flex; align-items: center; justify-content: center; position: relative; margin: 6pt 0 8pt; font-family: "Cambria Math", "Cambria", "Times New Roman", serif; font-size: 12pt; break-inside: avoid; }
+.eq .no { position: absolute; right: 0; font-family: "Times New Roman", serif; font-size: 11pt; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 2pt; }
+.frac > span:first-child { border-bottom: 1px solid #111; padding: 0 3pt; }
+.frac > span:last-child { padding: 0 3pt; }
+.sqrt { border-top: 1px solid #111; padding: 1pt 2pt 0; margin-left: -1pt; }
+pre { font-family: Consolas, "Courier New", monospace; font-size: 9.3pt; line-height: 1.35; border: 1px solid #555; background: #F6F7F9; padding: 7pt 9pt; margin: 4pt 0 6pt; white-space: pre-wrap; break-inside: avoid; }
+figure { margin: 6pt 0 2pt; break-inside: avoid; text-align: center; }
+figure svg { width: 100%; height: auto; }
+.refs li { font-size: 10.5pt; margin: 2.5pt 0; text-align: left; }
+.sign { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18pt; margin-top: 34pt; break-inside: avoid; }
+.sign div { border-top: 1px solid #111; padding-top: 4pt; text-align: center; font-size: 10.5pt; }
+.sign2 { display: flex; justify-content: space-between; margin-top: 30pt; break-inside: avoid; font-size: 10.5pt; }
+.sign2 div { width: 42%; border-top: 1px solid #111; padding-top: 4pt; text-align: center; }
+.nobreak { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<p class="inst">SRM Institute of Science and Technology</p>
+<p class="sub">Project Abstract · LLJ 1 Team Task Review · Quantum Machine Learning</p>
+<h1>Q-DRIFT: Drift-Aware Quantum Kernel Adaptation for Spacecraft Telemetry Anomaly Detection</h1>
+
+<table class="team" style="margin-top:10pt">
+  <tr><th style="width:11%">S. No.</th><th>Name</th><th>Register Number</th></tr>
+  <tr><td>1</td><td>Venkatanathan O R V</td><td>RA2411026011163</td></tr>
+  <tr><td>2</td><td>Mayukh Sarkar</td><td>RA2411026011218</td></tr>
+  <tr><td>3</td><td>Aman Salarpuria</td><td>RA2411003012435</td></tr>
+</table>
+<table class="meta">
+  <tr><td>Course and review</td><td>LLJ 1 — Team Task Review</td></tr>
+  <tr><td>Faculty</td><td>Dr. M. L. Sworna Kokila</td></tr>
+  <tr><td>Domain</td><td>Quantum Machine Learning (QML), time-series anomaly detection, concept drift</td></tr>
+  <tr><td>Core model</td><td>Quantum Support Vector Machine (one-class) with an adaptive quantum feature map</td></tr>
+  <tr><td>Dataset</td><td>NASA SMAP satellite and Mars Science Laboratory (Curiosity rover) telemetry</td></tr>
+</table>
+
+<div class="abstract">
+<h2>Abstract</h2>
+<p>Spacecraft send a continuous stream of sensor readings, called telemetry, back to Earth. Mission teams rely on anomaly-detection models to flag faults early, but these models are trained on past behaviour. When a spacecraft changes operating mode, or a sensor slowly degrades, the data distribution shifts. This is known as concept drift. A model trained on the old distribution then raises false alarms and can miss real faults.</p>
+<p>Quantum kernel methods are a promising family of quantum machine learning models for anomaly detection. A quantum feature map encodes each reading into a quantum state, and the kernel measures similarity between states. Their performance depends strongly on this encoding circuit, yet existing work chooses the encoding once, offline, and never revisits it.</p>
+<p>We propose <b>Q-DRIFT</b>, a drift-aware quantum kernel framework for spacecraft telemetry. A quantum-kernel one-class Support Vector Machine produces anomaly scores from windowed telemetry, reduced by PCA to 4–8 values and encoded on 4–8 simulated qubits. An online drift detector (ADWIN) monitors the stream of scores. When drift is detected, a feature-map controller evaluates a small library of candidate encodings (angle, ZZ and IQP feature maps at several bandwidths and depths) on a rolling window using kernel-target alignment. It then switches to the best candidate after a penalty for quantum circuit cost, without retraining the pipeline from scratch. Encodings that worked for a mode are cached and reused when that mode recurs.</p>
+<p>We will evaluate Q-DRIFT on the NASA SMAP and Mars Science Laboratory telemetry benchmark (82 channels, 105 expert-labelled anomaly sequences) under natural and injected abrupt, gradual and recurring drift. It will be compared with a fixed quantum SVM, a statically optimised quantum SVM, a classical RBF one-class SVM and an online classical model, using event-level F1, PR-AUC, false alarms, detection delay, recovery time after drift and circuit evaluations per sample. We expect Q-DRIFT to restore detection quality within a few windows after drift while spending far fewer quantum circuit evaluations than retraining from scratch. To our knowledge, this is the first drift-adaptive quantum kernel method evaluated on real spacecraft telemetry.</p>
+<p class="kw"><b>Keywords:</b> quantum machine learning, quantum kernel, quantum support vector machine, concept drift, anomaly detection, spacecraft telemetry, continual learning, NISQ.</p>
+</div>
+
+<h2>1. Introduction and Motivation</h2>
+<p>Every satellite and rover reports its health through telemetry: temperatures, battery voltages, currents, attitude and the commands it executes. Engineers at mission control watch these channels around the clock, because an undetected heater failure or power fault can end a mission. With thousands of satellites now in orbit, manual monitoring does not scale, so automated anomaly detection has become a core part of spacecraft operations.</p>
+<p>NASA's Jet Propulsion Laboratory released a public benchmark from two real missions: the SMAP Earth-observation satellite and the Curiosity rover of the Mars Science Laboratory (MSL). Its anomalies were labelled by experts from real incident reports [1]. Models built on this data, such as LSTM forecasters, assume that "normal" behaviour stays the same after training.</p>
+<p>In practice it does not. A spacecraft switches between operating modes, moves between sunlight and eclipse every orbit, and its sensors age. Each of these changes the statistical distribution of the data, a problem called concept drift [2]. Classical stream-learning research offers drift detectors such as ADWIN [3], but they only signal that something changed; they do not repair the model.</p>
+<p>Quantum machine learning adds a new option. A quantum kernel embeds data into a very large quantum state space through a small parameterised circuit, the feature map, and measures similarity there [4]. Studies show that the choice of feature map and its bandwidth largely decides whether a quantum kernel works at all [5], [6]. This makes quantum kernels especially sensitive to drift, and it also suggests a remedy: when the data changes, change the encoding.</p>
+
+<h2>2. Problem Statement</h2>
+<p>Given a multivariate telemetry stream x<sub>1</sub>, x<sub>2</sub>, … whose distribution changes at unknown times, detect anomalous events with few false alarms, using a quantum kernel model whose encoding was chosen for an earlier distribution.</p>
+<p>A fixed quantum kernel trained on one operating mode loses accuracy after drift: normal readings from the new mode fall outside the learned boundary and trigger false alarms, while real faults are hidden among them. Retraining the whole quantum model after every change is slow and costs many quantum circuit evaluations. The problem is therefore to <b>detect drift online and restore detection quality by re-selecting the quantum encoding, at a bounded quantum cost</b>, without full retraining.</p>
+<figure>
+<svg viewBox="0 0 760 230" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif" font-size="11.5">
+  <rect x="40" y="128" width="690" height="44" fill="#E3EBF8"/>
+  <line x1="40" y1="128" x2="730" y2="128" stroke="#1F4FA8" stroke-dasharray="6 5"/>
+  <line x1="40" y1="172" x2="730" y2="172" stroke="#1F4FA8" stroke-dasharray="6 5"/>
+  <text x="46" y="190" fill="#1F4FA8" font-weight="bold">normal band learned by a fixed model</text>
+  <line x1="330" y1="30" x2="330" y2="205" stroke="#C26A0A" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="336" y="202" fill="#C26A0A" font-weight="bold">mode change (drift)</text>
+  <polyline fill="none" stroke="#111" stroke-width="1.8" points="40,152 52,147 64,156 76,149 88,154 100,146 112,153 124,150 136,157 148,148 160,152 172,146 184,155 196,151 208,147 220,156 232,150 244,153 256,147 268,155 280,149 292,152 304,146 316,154 330,150 333,82 345,78 357,86 369,80 381,84 393,77 405,85 417,81 429,79 441,86 453,80 465,83 477,77 489,85 501,81 513,79 525,86 537,80 549,83 561,78 573,84 585,40 597,38 609,42 621,82 633,79 645,85 657,80 669,83 681,77 693,84 705,80 717,82 730,79"/>
+  <g fill="#B42332"><path d="M380 46l8 14h-16z"/><path d="M440 46l8 14h-16z"/><path d="M500 46l8 14h-16z"/><path d="M660 46l8 14h-16z"/><path d="M710 46l8 14h-16z"/></g>
+  <text x="372" y="34" fill="#B42332" font-weight="bold">false alarms</text>
+  <circle cx="597" cy="40" r="13" fill="none" stroke="#B42332" stroke-width="2.5"/>
+  <text x="597" y="20" text-anchor="middle" fill="#B42332" font-weight="bold">real fault, hidden among false alarms</text>
+  <text x="46" y="110" fill="#555">before drift: readings stay inside the band</text>
+  <text x="400" y="110" fill="#555">after drift: normal readings fall outside it</text>
+</svg>
+</figure>
+<p class="cap">Fig. 1. Concept drift: after a mode change, a fixed model's notion of "normal" no longer fits the data.</p>
+<p>Drift appears in three forms in spacecraft telemetry: <b>abrupt</b> (a new operating mode switches on), <b>gradual</b> (a sensor slowly ages) and <b>recurring</b> (modes that return, such as sunlight and eclipse on every orbit). Q-DRIFT is designed and evaluated for all three.</p>
+
+<h2>3. Literature Survey</h2>
+<p>Prior work covers anomaly detection on this data, drift detection and quantum kernels separately; none combines them (Table 1).</p>
+<table>
+  <thead><tr><th style="width:6%">Ref.</th><th style="width:21%">Work (year)</th><th style="width:29%">Method</th><th style="width:14%">Data used</th><th>Limitation for our problem</th></tr></thead>
+  <tr><td>[1]</td><td>Hundman et al., NASA JPL (2018)</td><td>LSTM forecasting + nonparametric dynamic thresholds</td><td>SMAP, MSL</td><td>Classical; adapts the threshold, not the model's representation</td></tr>
+  <tr><td>[12]</td><td>Schölkopf et al. (2001)</td><td>One-class SVM: learns the boundary of normal data</td><td>General</td><td>Fixed kernel; no notion of drift</td></tr>
+  <tr><td>[3]</td><td>Bifet &amp; Gavaldà (2007)</td><td>ADWIN adaptive-window drift detector with false-alarm bounds</td><td>Data streams</td><td>Detects change only; does not repair the model</td></tr>
+  <tr><td>[2]</td><td>Gama et al. (2014)</td><td>Survey of concept-drift adaptation strategies</td><td>Survey</td><td>Classical models only</td></tr>
+  <tr><td>[4]</td><td>Havlíček et al. (2019)</td><td>Quantum-enhanced feature spaces; quantum kernel SVM</td><td>Synthetic</td><td>Encoding fixed; static data</td></tr>
+  <tr><td>[6]</td><td>Hubregtsen et al. (2022)</td><td>Trainable quantum embedding kernels via kernel-target alignment</td><td>Classification benchmarks</td><td>Encoding tuned once, offline</td></tr>
+  <tr><td>[5]</td><td>Shaydulin &amp; Wild (2022)</td><td>Kernel bandwidth as a key quantum-kernel hyperparameter</td><td>Classical datasets</td><td>Bandwidth chosen once; no streams</td></tr>
+  <tr><td>[7]</td><td>Thanasilp et al. (2024)</td><td>Exponential concentration of quantum kernel values</td><td>Theory</td><td>Large-qubit kernels flatten; motivates small circuits</td></tr>
+  <tr><td>[8]</td><td>Kölle et al. (2024)</td><td>Efficient quantum one-class SVM (randomized measurements, subsampling)</td><td>Anomaly benchmarks</td><td>No drift; no spacecraft data</td></tr>
+  <tr><td>[9]</td><td>Quantum autoencoders for time series (2024)</td><td>Reconstruction error of a quantum autoencoder</td><td>Time-series benchmarks</td><td>No drift adaptation; no spacecraft data</td></tr>
+  <tr><td>[10]</td><td>Wu &amp; Keogh (2020–22)</td><td>Critique of anomaly benchmarks incl. SMAP/MSL</td><td>Benchmarks</td><td>Shows evaluation pitfalls we must avoid</td></tr>
+  <tr><td>[11]</td><td>ESA Anomaly Detection Benchmark (2024)</td><td>New satellite telemetry benchmark</td><td>ESA missions</td><td>Optional second dataset for validation</td></tr>
+</table>
+<p class="cap">Table 1. Summary of related work.</p>
+
+<h2>4. Research Gap</h2>
+<p>To our knowledge, no published work re-selects a quantum kernel's encoding online when drift is detected, and no quantum model has been evaluated on the NASA SMAP/MSL benchmark.</p>
+<ul>
+  <li><b>Static encodings.</b> Quantum kernel studies tune the feature map or bandwidth once, before deployment [5], [6]. Nothing adapts it after the data changes.</li>
+  <li><b>No quantum work on spacecraft telemetry.</b> Quantum anomaly detectors are tested on network-traffic or synthetic data [8], [9]; the real spacecraft benchmark [1] has only classical results.</li>
+  <li><b>Cost is ignored.</b> Drift adaptation in classical ML assumes retraining is cheap. On quantum hardware every kernel entry costs circuit runs, so the cost of adapting must be measured and limited.</li>
+  <li><b>Detectors do not repair.</b> Drift detectors such as ADWIN [3] flag a change but leave the model as it was.</li>
+</ul>
+
+<h2>5. Objectives</h2>
+<ol>
+  <li>Build a streaming pipeline for the NASA SMAP and MSL telemetry, processed strictly in time order.</li>
+  <li>Implement a quantum-kernel one-class SVM on 4–8 simulated qubits as the anomaly detector.</li>
+  <li>Design a library of candidate quantum feature maps (angle, ZZ, IQP) with bandwidth and depth settings.</li>
+  <li>Integrate an online drift detector (ADWIN) on the anomaly-score stream.</li>
+  <li>Develop a cost-aware controller that re-selects the encoding after drift using kernel-target alignment, and caches encodings for recurring modes.</li>
+  <li>Evaluate against fixed, statically optimised and classical baselines under abrupt, gradual and recurring drift, reporting accuracy, false alarms, recovery time and quantum cost.</li>
+</ol>
+
+<h2>6. Proposed Methodology</h2>
+<p>Scores flow left to right through the detector; when ADWIN flags drift, the controller tests the library and swaps a new encoding into the quantum model. Fig. 2 shows the seven components:</p>
+
+<ol>
+  <li><b>Telemetry stream.</b> SMAP and MSL channels are read one window at a time, strictly in time order.</li>
+  <li><b>Window + PCA.</b> Each channel is z-normalised on its training segment; a sliding window is compressed by PCA to 4–8 values, one per qubit.</li>
+  <li><b>Quantum one-class SVM.</b> The current feature map U<sub>c</sub> encodes each window; the quantum kernel k<sub>c</sub> feeds a one-class SVM that learns the boundary of normal data and outputs an anomaly score s(x).</li>
+  <li><b>Alarm.</b> A score above the threshold alerts the mission team.</li>
+  <li><b>Drift detector.</b> ADWIN watches the stream of scores and flags drift when the mean of recent scores shifts significantly.</li>
+  <li><b>Controller.</b> On drift, it scores every library candidate by kernel-target alignment on recent data, subtracts a cost penalty, and swaps the best encoding c* into the quantum model.</li>
+  <li><b>Feature-map library and mode cache.</b> The library holds angle, ZZ and IQP encodings at three bandwidths and two depths; the cache stores which encoding worked for each mode so recurring modes switch instantly.</li>
+</ol>
+<figure>
+<svg viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif" font-size="11.5">
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
+  <g fill="none" stroke="#333" stroke-width="1.25">
+    <path d="M184 76H206" marker-end="url(#a)"/><path d="M368 76H390" marker-end="url(#a)"/><path d="M552 76H574" marker-end="url(#a)"/>
+    <path d="M656 112V174" marker-end="url(#a)"/><path d="M576 220H554" marker-end="url(#a)"/><path d="M368 220H390" marker-end="url(#a)"/>
+    <path d="M472 176V114" marker-end="url(#a)"/><path d="M472 264V294" marker-start="url(#a)" marker-end="url(#a)"/>
+  </g>
+  <g fill="none" stroke="#333" stroke-width="1.25">
+    <rect x="24" y="40" width="160" height="72" rx="6"/><rect x="208" y="40" width="160" height="72" rx="6"/><rect x="392" y="40" width="160" height="72" rx="6"/><rect x="576" y="40" width="160" height="72" rx="6"/>
+    <rect x="24" y="176" width="344" height="88" rx="6"/><rect x="576" y="176" width="160" height="88" rx="6"/><rect x="392" y="296" width="160" height="72" rx="6"/>
+  </g>
+  <rect x="392" y="176" width="160" height="88" rx="6" fill="#E3EBF8" stroke="#1F4FA8" stroke-width="2"/>
+  <g fill="#111"><text x="36" y="64" font-weight="bold" font-size="13">Telemetry stream</text><text x="36" y="82">SMAP + MSL channels</text><text x="36" y="98">read in time order</text>
+  <text x="220" y="64" font-weight="bold" font-size="13">Window + PCA</text><text x="220" y="82">z-normalise, slide</text><text x="220" y="98">reduce to 4–8 values</text>
+  <text x="404" y="64" font-weight="bold" font-size="13">Quantum OC-SVM</text><text x="404" y="82">kernel k_c, 4–8 qubits</text><text x="404" y="98">outputs score s(x)</text>
+  <text x="588" y="64" font-weight="bold" font-size="13">Alarm</text><text x="588" y="82">s(x) above threshold</text><text x="588" y="98">alerts mission team</text>
+  <text x="36" y="200" font-weight="bold" font-size="13">Feature-map library</text><text x="36" y="218">Angle (RY), ZZ and IQP encodings</text><text x="36" y="234">× bandwidth 0.1, 0.5 or 1</text><text x="36" y="250">× circuit depth 1 or 2</text>
+  <text x="404" y="200" font-weight="bold" font-size="13">Controller</text><text x="404" y="218">scores by alignment</text><text x="404" y="234">minus λ × cost</text><text x="404" y="250">swaps in best c*</text>
+  <text x="588" y="200" font-weight="bold" font-size="13">Drift detector</text><text x="588" y="218">ADWIN on the scores</text><text x="588" y="234">flags a mean shift</text><text x="588" y="250">at confidence δ</text>
+  <text x="404" y="320" font-weight="bold" font-size="13">Mode cache</text><text x="404" y="338">signature → encoding</text><text x="404" y="354">reused on recurrence</text></g>
+  <g fill="#555"><text x="664" y="148">scores</text><text x="480" y="148">swap encoding</text></g>
+</svg>
+</figure>
+<p class="cap">Fig. 2. Q-DRIFT system architecture (7 components).</p>
+
+<h2>7. Q-DRIFT Algorithm and Key Equations</h2>
+<p><b>Quantum kernel.</b> Each window x is scaled by a bandwidth β and encoded by a feature-map circuit U<sub>c</sub> from the library. The kernel is the overlap of the two quantum states [4]:</p>
+<div class="eq"><span>k<sub>c</sub>(x, x′) = | ⟨0| U<sub>c</sub><sup>†</sup>(βx′) U<sub>c</sub>(βx) |0⟩ |<sup>2</sup></span><span class="no">(1)</span></div>
+<p><b>Anomaly score.</b> The one-class SVM [12] learns support vectors x<sub>i</sub> with weights α<sub>i</sub> and offset ρ on normal data; a large score means anomalous:</p>
+<div class="eq"><span>s(x) = ρ − <span style="font-size:15pt">Σ</span><sub>i</sub> α<sub>i</sub> k<sub>c</sub>(x<sub>i</sub>, x)</span><span class="no">(2)</span></div>
+<p><b>Drift test (ADWIN).</b> The window of recent scores W is split into two parts W<sub>0</sub>, W<sub>1</sub> of sizes n<sub>0</sub>, n<sub>1</sub>. Drift is flagged when their means differ by more than ε<sub>cut</sub> [3]:</p>
+<div class="eq"><span>| μ̂<sub>W<sub>0</sub></sub> − μ̂<sub>W<sub>1</sub></sub> | ≥ ε<sub>cut</sub>, &nbsp;&nbsp; ε<sub>cut</sub> = √<span class="sqrt"><span class="frac"><span>1</span><span>2m</span></span> ln <span class="frac"><span>4|W|</span><span>δ</span></span></span>, &nbsp;&nbsp; m = <span class="frac"><span>1</span><span>1/n<sub>0</sub> + 1/n<sub>1</sub></span></span></span><span class="no">(3)</span></div>
+<p><b>Encoding selection.</b> After drift, each candidate c is scored by kernel-target alignment [13] on a recent window labelled y (recent normal windows +1, synthetically perturbed copies −1), minus a cost penalty for its circuit evaluations:</p>
+<div class="eq"><span>A(K<sub>c</sub>, y) = <span class="frac"><span>⟨K<sub>c</sub>, yy<sup>T</sup>⟩<sub>F</sub></span><span>‖K<sub>c</sub>‖<sub>F</sub> ‖yy<sup>T</sup>‖<sub>F</sub></span></span></span><span class="no">(4)</span></div>
+<div class="eq"><span>c* = arg max<sub>c</sub> [ A(K<sub>c</sub>, y) − λ · <span class="frac"><span>Cost(c)</span><span>Cost<sub>max</sub></span></span> ]</span><span class="no">(5)</span></div>
+<div class="nobreak"><p><b>Pseudo-code.</b></p>
+<pre>Algorithm Q-DRIFT
+Input : telemetry stream X, library C = {angle, ZZ, IQP} x bandwidths x depths,
+        drift confidence delta, cost weight lambda, cache M = {}
+1  c &lt;- best encoding on the initial normal segment (alignment - cost)
+2  train one-class QSVM with kernel k_c on the initial segment
+3  for each new window x_t:
+4      s_t &lt;- anomaly score s(x_t);  raise alarm if s_t &gt; threshold
+5      feed s_t to ADWIN
+6      if ADWIN detects drift:
+7          sig &lt;- (mean, variance) signature of the recent window
+8          if a mode in M matches sig:           # recurring drift
+9              c &lt;- M[sig]
+10         else:
+11             build labelled window y from recent data
+12             for c' in C: score(c') &lt;- A(K_c', y) - lambda*Cost(c')/Cost_max
+13             c &lt;- argmax score;  M[sig] &lt;- c
+14         refit one-class QSVM on the recent window with kernel k_c
+15         log circuit evaluations used by this switch</pre></div>
+<p>Only the small one-class SVM is refitted on a short recent window; the pipeline, scaler and library stay fixed, which keeps each switch cheap.</p>
+
+<h2>8. Novelty and Contributions</h2>
+<p>Q-DRIFT proposes an adaptive learning mechanism for quantum kernels, not only an application of QML to a new dataset.</p>
+<ol>
+  <li><b>Drift-triggered quantum re-encoding.</b> The feature map and its bandwidth are re-selected online whenever drift is detected, instead of being fixed at training time.</li>
+  <li><b>First quantum evaluation on real spacecraft telemetry.</b> To our knowledge, quantum models have not been tested on the NASA SMAP/MSL benchmark; we evaluate continually, in time order, under three drift types.</li>
+  <li><b>Resource-aware adaptation.</b> Every switch is charged for the quantum circuit evaluations it needs, and the controller trades detection quality against that cost through λ.</li>
+  <li><b>Memory for recurring modes.</b> Encodings that worked for a mode are cached and reused instantly when the mode returns, such as sunlight and eclipse on each orbit.</li>
+</ol>
+<table>
+  <tr><th style="width:30%">Capability</th><th>Fixed quantum SVM</th><th>Statically optimised quantum SVM</th><th>Classical online model</th><th>Q-DRIFT</th></tr>
+  <tr><td>Quantum kernel</td><td>Yes</td><td>Yes</td><td>No</td><td><b>Yes</b></td></tr>
+  <tr><td>Encoding chosen for the data</td><td>No</td><td>Once, offline</td><td>Not applicable</td><td><b>Online, after every drift</b></td></tr>
+  <tr><td>Adapts after drift</td><td>No</td><td>No</td><td>Full retraining</td><td><b>Swaps encoding only</b></td></tr>
+  <tr><td>Reuses knowledge of past modes</td><td>No</td><td>No</td><td>No</td><td><b>Yes, mode cache</b></td></tr>
+  <tr><td>Tracks quantum cost of adapting</td><td>No</td><td>No</td><td>Not applicable</td><td><b>Yes</b></td></tr>
+</table>
+<p class="cap">Table 2. How Q-DRIFT differs from the approaches it is compared against.</p>
+
+<h2>9. Dataset and Experimental Setup</h2>
+<p>The NASA JPL benchmark gives 82 telemetry channels with 105 expert-labelled anomaly sequences from two missions [1] (Table 3).</p>
+<table>
+  <tr><th>Mission</th><th>Telemetry channels</th><th>Anomaly sequences</th><th>Values evaluated</th></tr>
+  <tr><td>SMAP satellite (Earth orbit)</td><td>55</td><td>69</td><td>429,735</td></tr>
+  <tr><td>MSL Curiosity rover (Mars)</td><td>27</td><td>36</td><td>66,709</td></tr>
+  <tr><td><b>Total</b></td><td><b>82</b></td><td><b>105</b></td><td><b>496,444</b></td></tr>
+</table>
+<p class="cap">Table 3. NASA SMAP/MSL telemetry benchmark [1].</p>
+<p><b>Preprocessing.</b> Each channel is z-normalised using its training segment only. A sliding window turns the stream into feature vectors, and PCA reduces each to 4–8 values, one per qubit. Data is never shuffled across time, to avoid leakage.</p>
+<p><b>Drift scenarios.</b> Natural mode changes already present in the data, plus controlled injections at known times: abrupt (a step change in level), gradual (a slow ramp) and recurring (two modes that alternate).</p>
+<p><b>Baselines.</b></p>
+<ul>
+  <li>Fixed quantum one-class SVM with one encoding chosen at the start</li>
+  <li>Statically optimised quantum SVM (best encoding chosen offline on all training data)</li>
+  <li>Classical one-class SVM with an RBF kernel</li>
+  <li>Online classical model with the same ADWIN detector and retraining</li>
+  <li>NASA's LSTM with dynamic thresholds [1], as a published reference point</li>
+</ul>
+<p><b>Tools.</b> Python, PennyLane [14] or Qiskit for 4–8 qubit simulation, scikit-learn (one-class SVM with precomputed kernels), the river library for ADWIN, NumPy and Matplotlib; Google Colab or a laptop CPU.</p>
+
+<h2>10. Evaluation Metrics and Expected Outcomes</h2>
+<p>We judge Q-DRIFT on detection quality, behaviour around drift and quantum cost, using strict event-level scoring without the "point-adjust" shortcut criticised in [10] (Table 4).</p>
+<table>
+  <tr><th style="width:26%">Metric</th><th>What it measures</th><th style="width:34%">Why it matters</th></tr>
+  <tr><td>Event-level F1</td><td>Whole anomaly events found vs missed and false events</td><td>Main detection quality, robust to long events</td></tr>
+  <tr><td>PR-AUC</td><td>Precision–recall over all thresholds</td><td>Threshold-free comparison on imbalanced data</td></tr>
+  <tr><td>False alarms per day</td><td>Alerts raised on normal data</td><td>Operator workload at mission control</td></tr>
+  <tr><td>Detection delay</td><td>Time from drift onset to ADWIN alarm</td><td>How fast the system notices change</td></tr>
+  <tr><td>Recovery time</td><td>Time until F1 returns to its pre-drift level</td><td>How fast the switch restores quality</td></tr>
+  <tr><td>Circuit evaluations per sample</td><td>Quantum kernel entries computed, incl. switches</td><td>Feasibility on real quantum hardware</td></tr>
+</table>
+<p class="cap">Table 4. Evaluation metrics.</p>
+<p><b>Expected outcomes (hypotheses to test, not results).</b></p>
+<ul>
+  <li>After drift, the fixed quantum SVM's F1 falls and stays low; Q-DRIFT's F1 falls briefly and recovers after the switch.</li>
+  <li>Q-DRIFT raises fewer false alarms than the fixed and statically optimised quantum SVMs in post-drift periods.</li>
+  <li>The cache makes recovery from recurring drift faster and cheaper than from new drift.</li>
+  <li>Q-DRIFT is competitive with classical baselines on F1; we will report honestly if a classical model is better, since our contribution is the adaptation mechanism, not a claimed quantum speed-up.</li>
+</ul>
+
+<h2>11. Applications, Limitations and Future Scope</h2>
+<p><b>Applications.</b></p>
+<ul>
+  <li>Health monitoring for satellites and rovers, where operating modes change often</li>
+  <li>Large satellite constellations, where thousands of spacecraft drift independently</li>
+  <li>Other systems whose "normal" changes: power grids, industrial IoT sensors, patient monitors</li>
+</ul>
+<div class="nobreak"><p><b>Limitations and how we handle them.</b></p>
+<table>
+  <tr><th style="width:45%">Limitation</th><th>Our mitigation</th></tr>
+  <tr><td>SMAP/MSL labels have known flaws [10]</td><td>Event-level scoring; optional validation on the ESA benchmark [11]</td></tr>
+  <tr><td>Quantum kernel values concentrate as qubits grow [7]</td><td>Stay at 4–8 qubits; bandwidth is part of the library [5]</td></tr>
+  <tr><td>Kernel cost grows with the square of the samples</td><td>Sliding windows, subsampling [8], and logged circuit counts</td></tr>
+  <tr><td>Experiments run on simulators</td><td>Validate the final kernels on free IBM cloud quantum hardware if time allows</td></tr>
+</table>
+<p class="cap">Table 5. Limitations and how we address them.</p></div>
+<p><b>Future scope.</b> Trainable feature maps that are fine-tuned after drift instead of picked from a fixed library; drift-aware quantum neural networks; noise-aware selection on real hardware; and deployment on onboard edge processors.</p>
+
+<h2>12. Conclusion</h2>
+<p>Q-DRIFT addresses a gap between quantum kernel methods, which depend heavily on their encoding, and real spacecraft telemetry, whose normal behaviour keeps changing. It detects drift online with ADWIN, re-selects the quantum feature map from a small library using kernel-target alignment and a cost penalty, and reuses cached encodings for recurring modes, all without full retraining. Evaluated on NASA's SMAP and MSL data against quantum and classical baselines, the project will show whether adapting the encoding restores detection quality after drift, and at what quantum cost. Beyond spacecraft, the same mechanism applies to any monitored system whose normal behaviour changes over time, such as power grids, industrial sensors and patient monitors.</p>
+
+<h2>References</h2>
+<ol class="refs">
+  <li>K. Hundman, V. Constantinou, C. Laporte, I. Colwell and T. Soderstrom, "Detecting spacecraft anomalies using LSTMs and nonparametric dynamic thresholding," in <i>Proc. ACM SIGKDD</i>, 2018. arXiv:1802.04431.</li>
+  <li>J. Gama, I. Žliobaitė, A. Bifet, M. Pechenizkiy and A. Bouchachia, "A survey on concept drift adaptation," <i>ACM Computing Surveys</i>, vol. 46, no. 4, 2014.</li>
+  <li>A. Bifet and R. Gavaldà, "Learning from time-changing data with adaptive windowing," in <i>Proc. SIAM Int. Conf. Data Mining (SDM)</i>, 2007, pp. 443–448.</li>
+  <li>V. Havlíček et al., "Supervised learning with quantum-enhanced feature spaces," <i>Nature</i>, vol. 567, pp. 209–212, 2019.</li>
+  <li>R. Shaydulin and S. M. Wild, "Importance of kernel bandwidth in quantum machine learning," 2022. arXiv:2111.05451.</li>
+  <li>T. Hubregtsen, D. Wierichs, E. Gil-Fuster, P.-J. H. S. Derks, P. K. Faehrmann and J. J. Meyer, "Training quantum embedding kernels on near-term quantum computers," <i>Physical Review A</i>, vol. 106, no. 4, 2022. arXiv:2105.02276.</li>
+  <li>S. Thanasilp, S. Wang, M. Cerezo and Z. Holmes, "Exponential concentration in quantum kernel methods," <i>Nature Communications</i>, 2024. arXiv:2208.11060.</li>
+  <li>M. Kölle et al., "Towards efficient quantum anomaly detection: one-class SVMs using variable subsampling and randomized measurements," in <i>Proc. ICAART</i>, 2024.</li>
+  <li>"Applying quantum autoencoders for time series anomaly detection," 2024. arXiv:2410.04154.</li>
+  <li>R. Wu and E. Keogh, "Current time series anomaly detection benchmarks are flawed and are creating the illusion of progress," 2020–22. arXiv:2009.13807.</li>
+  <li>"European Space Agency benchmark for anomaly detection in satellite telemetry," 2024. arXiv:2406.17826.</li>
+  <li>B. Schölkopf, J. C. Platt, J. Shawe-Taylor, A. J. Smola and R. C. Williamson, "Estimating the support of a high-dimensional distribution," <i>Neural Computation</i>, vol. 13, no. 7, pp. 1443–1471, 2001.</li>
+  <li>N. Cristianini, J. Shawe-Taylor, A. Elisseeff and J. Kandola, "On kernel-target alignment," in <i>Advances in Neural Information Processing Systems (NIPS)</i>, 2001.</li>
+  <li>V. Bergholm et al., "PennyLane: Automatic differentiation of hybrid quantum-classical computations," 2018. arXiv:1811.04968.</li>
+</ol>
+
+</body>
+</html>

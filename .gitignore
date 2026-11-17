@@ -1,0 +1,15 @@
+# secrets and local tooling (the Vercel token lives in 03_Website/.env.local)
+.env
+.env.*
+**/.env*
+.vercel/
+**/.vercel/
+.claude/
+node_modules/
+
+# Office lock files
+~$*
+
+# superseded by 02_Presentation/Q-DRIFT_Presentation_Script.md
+02_Presentation/Q-DRIFT_Presentation_Script.html
+02_Presentation/Q-DRIFT_Presentation_Script.pdf

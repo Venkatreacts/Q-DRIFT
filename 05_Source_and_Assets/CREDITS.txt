@@ -1,0 +1,18 @@
+Image credits (all from Wikimedia Commons)
+
+Website
+- isseearth.jpg   Aurora over Earth from the ISS (ISS065-E-250932). NASA, Johnson Space Center. Public domain.
+- launch.jpg      Delta II launches with SMAP from VAFB SLC-2 (KSC-2015-1256). NASA/Kim Shiflett. Public domain.
+- dsn.jpg         Goldstone Deep Space Network antenna. NASA. Public domain.
+- selfie2019.jpg  Curiosity self-portrait at Vera Rubin Ridge (PIA22960). NASA/JPL-Caltech/MSSS. Public domain.
+- aurora.jpg      ISS-39 Moscow, aurora borealis and Moon. NASA. Public domain.
+- fridge.png      Dilution fridge with quantum processors enclosed (render). OJB Quantum. CC BY 4.0.
+
+PowerPoint
+- earth.jpg       The Earth seen from Apollo 17. NASA. Public domain.
+- smap_model.png  SMAP spacecraft model. NASA. Public domain.
+- curiosity.jpg   Curiosity self-portrait at Buckskin (PIA19808). NASA/JPL-Caltech/MSSS. Public domain.
+- ibmq.jpg        IBM Q System (Fraunhofer). IBM Research. CC BY 2.0.
+- jpl_sfof.jpg    JPL Space Flight Operations Facility (GPN-2003-00064). NASA. Public domain.
+
+Unused downloads: marspano.jpg (PIA26047, NASA/JPL-Caltech), smap_sunset.jpg (NASA SVS).
