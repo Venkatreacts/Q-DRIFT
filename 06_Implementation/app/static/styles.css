@@ -153,7 +153,7 @@ td.best { color: var(--quantum); }
 
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.note { border-left: 3px solid var(--drift); padding: 2px 0 2px 12px; color: var(--ink-2); max-width: 80ch; }
+.note { background: color-mix(in srgb, var(--drift) 10%, transparent); border-radius: 6px; padding: 8px 12px; color: var(--ink-2); max-width: 80ch; }
 .finding { margin: 0 0 6px; }
 .finding b { color: var(--ink); }
 
