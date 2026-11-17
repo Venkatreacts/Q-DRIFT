@@ -1,0 +1,6 @@
+data/
+__pycache__/
+*.pyc
+# scratch probes and logs at the top of this folder
+/_*.py
+/_*.log

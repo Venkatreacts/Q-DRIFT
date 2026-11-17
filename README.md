@@ -11,7 +11,7 @@ LLJ 1 Team Task Review, Quantum Machine Learning. Faculty: Dr. M. L. Sworna Koki
 
 Spacecraft telemetry changes when a mission switches operating mode or a sensor ages (concept drift), and a fixed anomaly detector then raises false alarms. Q-DRIFT detects the drift online with ADWIN and swaps the encoding of a quantum-kernel one-class SVM from a small library, scoring candidates by kernel-target alignment minus a quantum-cost penalty. It is designed for the NASA SMAP and MSL telemetry benchmark.
 
-This is a project proposal. Charts and numbers in the slides and website marked as illustration or hypothesis are not experimental results.
+Folders 01–05 are the LLJ I proposal; charts there marked as illustration or hypothesis are not experimental results. Folder `06_Implementation` is the LLJ II implementation, and every number in it is measured.
 
 ## Live website
 
@@ -28,6 +28,7 @@ Arrow keys or swipe to move between sheets, `F` for fullscreen, `A` for the abst
 | `03_Website` | `index.html` and the abstract PDF, deployed on Vercel |
 | `04_Earlier_Idea_Q-ConformMed` | The first project idea, not used |
 | `05_Source_and_Assets` | Photos and `CREDITS.txt`, plus the scripts that generate the slides, website and Word file |
+| `06_Implementation` | **LLJ II.** The working Q-DRIFT system: PennyLane engine, experiments on all 81 NASA channels, demo console, tests, report and deck. Start with its `README.md` and `DEMO.md` |
 
 ## Rebuilding
 

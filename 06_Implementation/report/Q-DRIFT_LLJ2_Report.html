@@ -1,0 +1,148 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Q-DRIFT LLJ II Report</title><style>
+@page { size: A4; margin: 20mm 18mm 20mm 20mm;
+  @top-right { content: "Q-DRIFT \00B7  LLJ II Implementation Report"; font: italic 9pt "Times New Roman", serif; color: #555; }
+  @bottom-center { content: "Page " counter(page) " of " counter(pages); font: 9pt "Times New Roman", serif; color: #555; } }
+@page :first { @top-right { content: none; } }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: "Times New Roman", Times, serif; font-size: 11.5pt; line-height: 1.42; color: #111; margin: 0; }
+h1 { font-size: 19pt; line-height: 1.2; text-align: center; margin: 6pt 0 4pt; }
+.inst { text-align: center; font-size: 12pt; font-weight: bold; letter-spacing: .02em; margin: 0; }
+.sub { text-align: center; font-size: 11.5pt; margin: 2pt 0 12pt; font-style: italic; }
+h2 { font-size: 13pt; margin: 14pt 0 5pt; padding-bottom: 2pt; border-bottom: 1px solid #999; break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 9pt 0 3pt; break-after: avoid; }
+p { margin: 0 0 6pt; text-align: justify; hyphens: auto; }
+ul, ol { margin: 0 0 6pt; padding-left: 20pt; } li { margin: 1.5pt 0; text-align: justify; }
+table { width: 100%; border-collapse: collapse; margin: 4pt 0 4pt; font-size: 10.5pt; break-inside: auto; }
+tr { break-inside: avoid; } thead { display: table-header-group; }
+th, td { border: 1px solid #555; padding: 3.5pt 6pt; vertical-align: top; text-align: left; }
+th { background: #E9EDF3; font-weight: bold; }
+.cap { font-size: 10pt; text-align: center; margin: 3pt 0 10pt; font-style: italic; }
+.meta td:first-child { width: 28%; font-weight: bold; background: #F4F6F9; }
+.team th, .team td { text-align: center; }
+.abstract { border: 1px solid #555; padding: 9pt 12pt 6pt; margin: 6pt 0 8pt; background: #FAFBFC; }
+.abstract h2 { border: 0; margin-top: 0; text-align: center; }
+.kw { font-size: 10.5pt; }
+.eq { display: flex; align-items: center; justify-content: center; position: relative; margin: 6pt 0 8pt; font-family: "Cambria Math", "Cambria", "Times New Roman", serif; font-size: 12pt; break-inside: avoid; }
+.eq .no { position: absolute; right: 0; font-family: "Times New Roman", serif; font-size: 11pt; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 2pt; }
+.frac > span:first-child { border-bottom: 1px solid #111; padding: 0 3pt; }
+.frac > span:last-child { padding: 0 3pt; }
+.sqrt { border-top: 1px solid #111; padding: 1pt 2pt 0; margin-left: -1pt; }
+pre { font-family: Consolas, "Courier New", monospace; font-size: 9.3pt; line-height: 1.35; border: 1px solid #555; background: #F6F7F9; padding: 7pt 9pt; margin: 4pt 0 6pt; white-space: pre-wrap; break-inside: avoid; }
+figure { margin: 6pt 0 2pt; break-inside: avoid; text-align: center; }
+figure svg { width: 100%; height: auto; }
+.refs li { font-size: 10.5pt; margin: 2.5pt 0; text-align: left; }
+.sign { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18pt; margin-top: 34pt; break-inside: avoid; }
+.sign div { border-top: 1px solid #111; padding-top: 4pt; text-align: center; font-size: 10.5pt; }
+.sign2 { display: flex; justify-content: space-between; margin-top: 30pt; break-inside: avoid; font-size: 10.5pt; }
+.sign2 div { width: 42%; border-top: 1px solid #111; padding-top: 4pt; text-align: center; }
+.nobreak { break-inside: avoid; }
+
+figure img { width: 100%; } figure.half img { width: 70%; } td.num, th.num { text-align: right; } .small td, .small th { font-size: 9.5pt; padding: 2.5pt 4pt; }</style></head><body>
+<p class="inst">SRM Institute of Science and Technology</p>
+<h1>Q-DRIFT: Drift-Aware Quantum Kernel Adaptation for Spacecraft Telemetry Anomaly Detection</h1>
+<p class="sub">LLJ II Team Task Performance Review: implementation, demonstration and results</p>
+<table class="team"><thead><tr><th>Name</th><th>Register number</th></tr></thead><tbody><tr><td>Venkatanathan O R V</td><td>RA2411026011163</td></tr><tr><td>Mayukh Sarkar</td><td>RA2411026011218</td></tr><tr><td>Aman Salarpuria</td><td>RA2411003012435</td></tr></tbody></table>
+<table class="meta"><tbody><tr><td>Course</td><td>Quantum Machine Learning</td></tr><tr><td>Faculty</td><td>Dr. M. L. Sworna Kokila</td></tr>
+<tr><td>Code and data pipeline</td><td>github.com/Venkatreacts/Q-DRIFT, folder 06_Implementation</td></tr></tbody></table>
+
+<div class="abstract"><h2>Summary</h2>
+<p>We implemented the Q-DRIFT system proposed at LLJ I and evaluated it on all 81 channels of the NASA SMAP/MSL benchmark (105 labelled anomaly sequences), streamed strictly in time order. Eighteen quantum encodings (angle, ZZ and IQP circuits at three bandwidths and two depths) are simulated in PennyLane; their fidelity kernels drive a one-class SVM. An ADWIN drift test, a switch-validation step, an encoding-selection rule with a circuit-cost penalty, a reservoir of past normal behaviour and a mode cache make the detector adaptive. The quantum kernels are verified against Qiskit to 10<sup>−10</sup>.</p>
+<p>A well-selected quantum kernel reaches event-level F1 0.58 at its best threshold against 0.52 for a classical RBF kernel and catches more anomalies (82 vs 65 of 105), but the RBF kernel ranks time steps better (AUC-PR 0.385 vs 0.341). On the unmodified streams adaptation costs precision. Under injected operating-mode changes, Q-DRIFT spends 70–78% less normal time in false alarm than the same quantum model without adaptation. Testing also showed that the selection rule we proposed, kernel-target alignment, prefers concentrated kernels; we replaced it with a held-out fault-detection test and explain the failure through kernel concentration.</p>
+<p class="kw"><b>Keywords:</b> quantum kernels, one-class SVM, concept drift, ADWIN, kernel concentration, spacecraft telemetry, NASA SMAP/MSL.</p></div>
+
+<h2>1. What was built</h2>
+<table class=""><thead><tr><th>Component</th><th>Files</th><th>What it does</th></tr></thead><tbody><tr><td>Data pipeline</td><td>qdrift/data.py</td><td>Loads the 81 labelled channels (P-2's duplicate label rows merged), z-normalises each on its training segment, cuts 64-step windows, compresses each to 6 values by PCA and scales them to angles.</td></tr><tr><td>Encoding library</td><td>qdrift/featuremaps.py</td><td>18 PennyLane circuits; statevectors computed once per window with parameter broadcasting; fidelity kernel |⟨ψ(x′)|ψ(x)⟩|².</td></tr><tr><td>Kernel analysis</td><td>qdrift/kernels.py</td><td>Kernel-target alignment, expressibility, Meyer–Wallach entanglement, concentration, depolarising and shot-noise models.</td></tr><tr><td>Detectors</td><td>qdrift/models.py</td><td>Quantum one-class SVM on a precomputed kernel; RBF one-class SVM and Isolation Forest baselines.</td></tr><tr><td>Drift test</td><td>qdrift/adwin.py</td><td>ADWIN implemented from equation (3) of the abstract.</td></tr><tr><td>Controller</td><td>qdrift/stream.py</td><td>The Q-DRIFT loop and every baseline, as configurations of one streaming runner.</td></tr><tr><td>Evaluation</td><td>qdrift/metrics.py, experiments/run_all.py</td><td>Event-level and point-wise metrics, Wilcoxon tests, all experiments, JSON output.</td></tr><tr><td>Console</td><td>app/server.py, app/static/</td><td>Local web app: mission replay, live runs with injected drift, results, encoding library, kernel lab.</td></tr><tr><td>Tests</td><td>tests/test_core.py</td><td>27 tests, including the Qiskit cross-check.</td></tr></tbody></table>
+<p class="cap">Table 1. Implementation, in the 06_Implementation folder of the repository.</p>
+
+<h2>2. Method as implemented</h2>
+<h3>2.1 Encoding and kernel</h3>
+<p>Each window x is scaled by bandwidth β and encoded by U<sub>c</sub>(βx). Angle maps apply R<sub>Y</sub> rotations (depth 2 adds a CNOT ring between layers); ZZ maps follow Havlíček et al. with φ<sub>ij</sub> = (π − x<sub>i</sub>)(π − x<sub>j</sub>) on neighbouring qubits; IQP maps use φ<sub>ij</sub> = x<sub>i</sub>x<sub>j</sub> on all pairs. The kernel k<sub>c</sub>(x, x′) = |⟨0|U<sub>c</sub><sup>†</sup>(βx′)U<sub>c</sub>(βx)|0⟩|² is what one compute–uncompute circuit estimates on hardware; in simulation each window's state is computed once and kernels are inner products. The one-class SVM (ν = 0.05) gives s(x) = ρ − Σ<sub>i</sub> α<sub>i</sub> k(x<sub>i</sub>, x). Scores are converted to a robust z-score (median and MAD on calibration windows), smoothed with an exponential average (0.2), and an alarm is raised above z = 6.</p>
+<table class="small"><thead><tr><th>Encoding</th><th>1-qubit gates</th><th>2-qubit gates</th><th>Cost</th><th>Expressibility (KL)</th><th>Entangling (Q)</th></tr></thead><tbody><tr><td>ANGLE b=0.1 d=1</td><td>6</td><td>0</td><td>12</td><td>147.888</td><td>0.000</td></tr><tr><td>ANGLE b=0.1 d=2</td><td>12</td><td>6</td><td>144</td><td>109.362</td><td>0.127</td></tr><tr><td>ANGLE b=0.3 d=1</td><td>6</td><td>0</td><td>12</td><td>33.909</td><td>0.000</td></tr><tr><td>ANGLE b=0.3 d=2</td><td>12</td><td>6</td><td>144</td><td>13.895</td><td>0.620</td></tr><tr><td>ANGLE b=1 d=1</td><td>6</td><td>0</td><td>12</td><td>0.547</td><td>0.000</td></tr><tr><td>ANGLE b=1 d=2</td><td>12</td><td>6</td><td>144</td><td>0.250</td><td>0.685</td></tr><tr><td>ZZ b=0.1 d=1</td><td>17</td><td>10</td><td>234</td><td>1.492</td><td>0.663</td></tr><tr><td>ZZ b=0.1 d=2</td><td>34</td><td>20</td><td>468</td><td>0.944</td><td>0.617</td></tr><tr><td>ZZ b=0.3 d=1</td><td>17</td><td>10</td><td>234</td><td>0.117</td><td>0.678</td></tr><tr><td>ZZ b=0.3 d=2</td><td>34</td><td>20</td><td>468</td><td>0.131</td><td>0.544</td></tr><tr><td>ZZ b=1 d=1</td><td>17</td><td>10</td><td>234</td><td>0.122</td><td>0.663</td></tr><tr><td>ZZ b=1 d=2</td><td>34</td><td>20</td><td>468</td><td>0.096</td><td>0.539</td></tr><tr><td>IQP b=0.1 d=1</td><td>27</td><td>30</td><td>654</td><td>143.482</td><td>0.005</td></tr><tr><td>IQP b=0.1 d=2</td><td>54</td><td>60</td><td>1308</td><td>144.899</td><td>0.005</td></tr><tr><td>IQP b=0.3 d=1</td><td>27</td><td>30</td><td>654</td><td>24.275</td><td>0.306</td></tr><tr><td>IQP b=0.3 d=2</td><td>54</td><td>60</td><td>1308</td><td>28.099</td><td>0.324</td></tr><tr><td>IQP b=1 d=1</td><td>27</td><td>30</td><td>654</td><td>0.105</td><td>0.905</td></tr><tr><td>IQP b=1 d=2</td><td>54</td><td>60</td><td>1308</td><td>0.148</td><td>0.874</td></tr></tbody></table>
+<p class="cap">Table 2. The 18-encoding library (6 qubits). Two-qubit gates are CNOT-equivalents (IsingZZ = 2). Cost weights two-qubit gates ×10 over one U<sup>†</sup>U circuit. Expressibility: KL divergence from Haar fidelities (lower is more expressive).</p>
+<h3>2.2 Adaptation loop</h3>
+<ol>
+<li><b>Drift check.</b> ADWIN (δ = 0.002) watches the smoothed score. A saturated score never changes, so an alarm unbroken for 1 000 steps (longer than 80% of labelled anomalies) is also treated as a possible new regime.</li>
+<li><b>Validation.</b> The controller collects 300 windows and adapts only if the current model gives the most recent half a median z above 2. A short anomaly that ends inside that period does not cause a switch.</li>
+<li><b>Mode cache.</b> A regime signature (level and log-spread of the signal) is compared with stored ones; a match restores the stored model with no new circuits.</li>
+<li><b>Encoding selection.</b> On recent windows mixed with remembered normal windows, each candidate trains a one-class SVM on half and scores how well it flags the other half against synthetic faults (spikes, level shifts, noise bursts, freezes, reversals). Quality Q(c) mixes the rank of that held-out AUC (weight 2) with the rank of the kernel's off-diagonal variance (weight 1, a concentration guard); c* = argmax Q(c) − λ·Cost(c)/Cost<sub>max</sub>, λ = 0.1. A new encoding must beat the current one by 0.1.</li>
+<li><b>Refit.</b> The SVM is refitted on 125 recent windows plus 125 from a reservoir of past normal windows, so earlier modes are not forgotten.</li>
+</ol>
+<p>Every switch logs the circuits a quantum processor would run: m(m−1)/2 per kernel matrix, plus one circuit per support vector per scored window.</p>
+
+<h2>3. Verification</h2>
+<table class=""><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody><tr><td>PennyLane ZZ kernel vs Qiskit zz_feature_map (independent library)</td><td>Equal to 10<sup>−10</sup></td></tr><tr><td>All 18 kernels: unit diagonal, symmetric, positive semidefinite, values in [0, 1]</td><td>Pass</td></tr><tr><td>Angle encoding vs closed form ∏ cos²(β(x<sub>i</sub> − x′<sub>i</sub>)/2)</td><td>Pass</td></tr><tr><td>Depolarising model limits (p = 0 gives K, p = 1 gives 2<sup>−n</sup>); shot noise unbiased</td><td>Pass</td></tr><tr><td>Meyer–Wallach: product state 0, GHZ state 1</td><td>Pass</td></tr><tr><td>ADWIN: silent on 2 000 stationary samples, detects a mean shift within 100 steps</td><td>Pass</td></tr><tr><td>Event metrics on a hand-made case</td><td>Pass</td></tr></tbody></table>
+<p class="cap">Table 3. Automated tests (python -m pytest): 27 passed.</p>
+
+<h2>4. Experimental setup</h2>
+<p><b>Data.</b> All 81 labelled channels of NASA SMAP and MSL [1]; the telemetry value (column 0) of each; training segment for fitting and normalisation only; test segment streamed in order. <b>Metrics.</b> Event level, as in the benchmark paper: a labelled sequence is detected if any alarm event overlaps it; an alarm event overlapping none is a false positive; precision, recall and F1 are micro-averaged over channels. AUC-PR on the point-wise score needs no threshold. Point-adjusted F1 is computed but not reported because it is known to be optimistic [9]. <b>Threshold.</b> One rule for all methods, z = 6, chosen on 21 development channels (every fourth channel); the full threshold curve is reported so no method is judged at a single tuned point. <b>Baselines.</b> Fixed QSVM (textbook ZZ map, β = 1, depth 2), static-best QSVM (encoding chosen once on the training segment with our rule, never adapted), RBF one-class SVM (median-heuristic γ), online RBF with the same ADWIN and refit, Isolation Forest, and NASA's published LSTM as a reference. <b>Hardware.</b> One laptop CPU; the full suite takes about 40 minutes.</p>
+
+<h2>5. Results</h2>
+<h3>5.1 Benchmark on unmodified streams</h3>
+<table class=""><thead><tr><th>Method</th><th>Detected</th><th>False alarms</th><th>Precision</th><th>Recall</th><th>F1</th><th>AUC-PR</th><th>False alarms / 1k steps</th></tr></thead><tbody><tr><td><b>Q-DRIFT</b></td><td>79/105</td><td>189</td><td>0.295</td><td>0.752</td><td>0.424</td><td>0.327</td><td>0.38</td></tr><tr><td>Fixed QSVM</td><td>54/105</td><td>35</td><td>0.607</td><td>0.514</td><td>0.557</td><td>0.255</td><td>0.07</td></tr><tr><td>Static-best QSVM</td><td>82/105</td><td>141</td><td>0.368</td><td>0.781</td><td>0.500</td><td>0.341</td><td>0.28</td></tr><tr><td>RBF OCSVM</td><td>65/105</td><td>80</td><td>0.448</td><td>0.619</td><td>0.520</td><td>0.385</td><td>0.21</td></tr><tr><td>Online RBF + ADWIN</td><td>59/105</td><td>78</td><td>0.431</td><td>0.562</td><td>0.488</td><td>0.357</td><td>0.22</td></tr><tr><td>Isolation Forest</td><td>37/105</td><td>41</td><td>0.474</td><td>0.352</td><td>0.404</td><td>0.285</td><td>0.10</td></tr></tbody></table>
+<p class="cap">Table 4. All 81 channels at z = 6. NASA LSTM with dynamic thresholds, for reference [1]: precision 0.875, recall 0.800 (uses command channels and per-channel deep models).</p>
+<figure class=""><img src="figs/fig1.png" alt="Fig. 1. Event F1 at each method&#x27;s best threshold, and threshold-free AUC-PR."></figure><p class="cap">Fig. 1. Event F1 at each method's best threshold, and threshold-free AUC-PR.</p>
+<figure class=""><img src="figs/fig2.png" alt="Fig. 2. Event F1 against alarm threshold; the dotted line is the threshold used in Table 4."></figure><p class="cap">Fig. 2. Event F1 against alarm threshold; the dotted line is the threshold used in Table 4.</p>
+<table class=""><thead><tr><th>Q-DRIFT vs</th><th>Δ AUC-PR</th><th>W–L</th><th>p</th><th>Δ event F1</th><th>W–L</th><th>p</th></tr></thead><tbody><tr><td>Fixed QSVM</td><td>+0.072</td><td>48–30</td><td>0.0050</td><td>+0.056</td><td>26–20</td><td>0.2688</td></tr><tr><td>Static-best QSVM</td><td>-0.014</td><td>21–19</td><td>0.5542</td><td>-0.095</td><td>3–19</td><td>0.0001</td></tr><tr><td>RBF OCSVM</td><td>-0.058</td><td>29–50</td><td>0.0115</td><td>-0.004</td><td>23–25</td><td>0.8533</td></tr><tr><td>Online RBF + ADWIN</td><td>-0.030</td><td>33–44</td><td>0.1362</td><td>+0.063</td><td>26–18</td><td>0.1592</td></tr><tr><td>Isolation Forest</td><td>+0.043</td><td>45–36</td><td>0.2458</td><td>+0.202</td><td>38–21</td><td>0.0014</td></tr></tbody></table>
+<p class="cap">Table 5. Wilcoxon signed-rank tests over channels (positive Δ favours Q-DRIFT).</p>
+<p>The selected quantum kernel detects as well as the classical RBF kernel by event F1 at matched best thresholds and catches more of the 105 anomalies, but RBF ranks individual time steps better. The fixed textbook ZZ map has the highest precision because its kernel is concentrated: it rarely alarms and misses about half of the anomalies. On these unmodified streams, Q-DRIFT adapts 0.8 times per channel on average and this costs precision: what changes in them is mostly the anomalies themselves.</p>
+
+<h3>5.2 Controlled operating-mode changes</h3>
+<p>On 24 channels the signal is moved, at a known time, to a new level and spread (abrupt step, 1 500-step ramp, or alternation every 1 200 steps). Labels are unchanged, so alarms caused by the new mode are false.</p>
+<table class="small"><thead><tr><th>Method</th><th>Abrupt: detected</th><th>Abrupt: false-alarm time</th><th>Gradual: detected</th><th>Gradual: false-alarm time</th><th>Recurring: detected</th><th>Recurring: false-alarm time</th><th>Cache hits (recurring)</th></tr></thead><tbody><tr><td><b>Q-DRIFT</b></td><td>14/34</td><td>13.0%</td><td>19/34</td><td>16.6%</td><td>15/34</td><td>13.7%</td><td>9</td></tr><tr><td>Static-best QSVM</td><td>27/34</td><td>57.9%</td><td>27/34</td><td>54.8%</td><td>26/34</td><td>46.0%</td><td>0</td></tr><tr><td>Fixed QSVM</td><td>15/34</td><td>37.7%</td><td>15/34</td><td>38.4%</td><td>15/34</td><td>35.8%</td><td>0</td></tr><tr><td>RBF OCSVM</td><td>23/34</td><td>38.1%</td><td>23/34</td><td>35.8%</td><td>22/34</td><td>25.1%</td><td>0</td></tr><tr><td>Online RBF + ADWIN</td><td>10/34</td><td>3.8%</td><td>13/34</td><td>4.0%</td><td>11/34</td><td>4.9%</td><td>0</td></tr><tr><td>Refit-only QSVM</td><td>23/34</td><td>15.3%</td><td>26/34</td><td>18.2%</td><td>24/34</td><td>20.1%</td><td>14</td></tr></tbody></table>
+<p class="cap">Table 6. False-alarm time: share of normal steps after the change spent in alarm (lower is better).</p>
+<figure class=""><img src="figs/fig3.png" alt="Fig. 3. Normal time in alarm after the mode change."></figure><p class="cap">Fig. 3. Normal time in alarm after the mode change.</p>
+<figure class=""><img src="figs/fig4.png" alt="Fig. 4. Channel T-1 with an abrupt mode change (violet). The static quantum model stays in alarm; Q-DRIFT validates the change, switches (dashed) and recovers. Red: NASA-labelled anomaly."></figure><p class="cap">Fig. 4. Channel T-1 with an abrupt mode change (violet). The static quantum model stays in alarm; Q-DRIFT validates the change, switches (dashed) and recovers. Red: NASA-labelled anomaly.</p>
+<p>Q-DRIFT reduces false-alarm time by 78% (abrupt), 70% (gradual), 70% (recurring) relative to the same quantum model without adaptation. Refitting without re-encoding recovers less and raises more separate false alarms (125 against 47 in the abrupt case), so choosing a new encoding matters beyond refitting. The classical online model adapts fastest but detects fewer labelled anomalies.</p>
+<p><b>Why event F1 is not used here.</b> A detector that stays in alarm after the change forms one long alarm event that overlaps every later anomaly, so it scores high recall and few false-alarm events while being useless to an operator. Under drift we therefore report detected anomalies and false-alarm time separately.</p>
+
+<h3>5.3 Ablation</h3>
+<table class="small"><thead><tr><th>Variant</th><th>Precision</th><th>Recall</th><th>F1 (z = 6)</th><th>Best F1</th><th>AUC-PR</th><th>Switches</th><th>Cache hits</th><th>Selection circuits</th></tr></thead><tbody><tr><td><b>Q-DRIFT</b></td><td>0.295</td><td>0.752</td><td>0.424</td><td>0.51</td><td>0.328</td><td>0.80</td><td>4</td><td>225,307</td></tr><tr><td>no cache</td><td>0.297</td><td>0.752</td><td>0.426</td><td>0.50</td><td>0.330</td><td>0.77</td><td>0</td><td>226,893</td></tr><tr><td>no cost penalty (lam=0)</td><td>0.296</td><td>0.771</td><td>0.427</td><td>0.52</td><td>0.338</td><td>0.80</td><td>4</td><td>225,307</td></tr><tr><td>high cost penalty (lam=0.5)</td><td>0.299</td><td>0.714</td><td>0.421</td><td>0.49</td><td>0.333</td><td>0.75</td><td>4</td><td>218,960</td></tr><tr><td>KTA selection (LLJ-I proposal)</td><td>0.504</td><td>0.600</td><td>0.548</td><td>0.55</td><td>0.286</td><td>1.20</td><td>39</td><td>220,547</td></tr><tr><td>refit only (no re-encoding)</td><td>0.301</td><td>0.762</td><td>0.431</td><td>0.51</td><td>0.336</td><td>0.94</td><td>5</td><td>128,520</td></tr><tr><td>no adaptation</td><td>0.368</td><td>0.781</td><td>0.500</td><td>0.58</td><td>0.341</td><td>0.00</td><td>0</td><td>128,520</td></tr></tbody></table>
+<p class="cap">Table 7. Each row changes one part of Q-DRIFT; all channels, unmodified streams.</p>
+<p>Kernel-target alignment, the rule proposed at LLJ I, selects concentrated kernels. They alarm rarely, which raises precision (0.50 vs 0.29) but lowers recall (0.60 vs 0.75) and ranking quality (AUC-PR 0.286 vs 0.328). In a study on the 21 development channels, the encoding chosen by alignment reached AUC-PR 0.327, below a random choice (0.447); the held-out fault test with the spread guard reached 0.482, and the best possible choice 0.599. The gap to that best choice is the main open problem.</p>
+
+<h3>5.4 Kernel concentration</h3>
+<figure class="half"><img src="figs/fig5.png" alt="Fig. 5. Variance of IQP kernel values on real SMAP windows against qubit count. At β = 1 it collapses exponentially; at β = 0.1 the kernel is nearly constant."></figure><p class="cap">Fig. 5. Variance of IQP kernel values on real SMAP windows against qubit count. At β = 1 it collapses exponentially; at β = 0.1 the kernel is nearly constant.</p>
+<p>This reproduces exponential kernel concentration [6, 7] on spacecraft telemetry and explains both the failure of alignment and why bandwidth, not circuit family, is the most important choice.</p>
+
+<h3>5.5 Toward hardware: noise and qubit count</h3>
+<table class=""><thead><tr><th>Two-qubit error</th><th>exact</th><th>4,096 shots</th><th>512 shots</th></tr></thead><tbody><tr><td>none</td><td>0.328</td><td>0.340</td><td>0.337</td></tr><tr><td>0.5%</td><td>0.342</td><td>0.317</td><td>0.319</td></tr><tr><td>2.0%</td><td>0.347</td><td>0.318</td><td>0.326</td></tr></tbody></table>
+<p class="cap">Table 8. Q-DRIFT AUC-PR under simulated two-qubit depolarising error and finite shots (12 channels).</p>
+<table class=""><thead><tr><th>Qubits</th><th>Q-DRIFT AUC-PR</th><th>Static-best QSVM AUC-PR</th><th>RBF OCSVM AUC-PR</th><th>Q-DRIFT F1</th><th>Static-best QSVM F1</th><th>RBF OCSVM F1</th></tr></thead><tbody><tr><td>2</td><td>0.166</td><td>0.170</td><td>0.188</td><td>0.286</td><td>0.476</td><td>0.455</td></tr><tr><td>4</td><td>0.335</td><td>0.327</td><td>0.296</td><td>0.500</td><td>0.581</td><td>0.519</td></tr><tr><td>6</td><td>0.354</td><td>0.332</td><td>0.328</td><td>0.269</td><td>0.328</td><td>0.615</td></tr><tr><td>8</td><td>0.354</td><td>0.358</td><td>0.360</td><td>0.207</td><td>0.215</td><td>0.609</td></tr></tbody></table>
+<p class="cap">Table 9. Effect of qubit count (one PCA component per qubit, 12 channels).</p>
+<p>Over this range the ranking quality barely moves (AUC-PR 0.32–0.35). Global depolarising noise only rescales kernel values, and 512 shots per entry still resolve the kernel values the detector uses. Event F1 at the fixed threshold rose with finite shots, most likely because shot noise widens the spread of normal scores so fewer windows cross the threshold; we read this as a threshold effect, not better detection.</p>
+<p>With more qubits (one PCA component each), AUC-PR rises from 2 to 4 qubits and is flat from 6 to 8 for all three models. Event F1 of the quantum models at the fixed z threshold falls at 6–8 qubits on these channels while RBF's does not; we have not yet separated this threshold effect from detection quality.</p>
+
+<h2>6. Discussion and limitations</h2>
+<ul>
+<li>We do not claim a quantum advantage: the best classical baseline ranks anomalies better overall, and every kernel here can be simulated classically at 6 qubits.</li>
+<li>The adaptive loop is useful when operating modes change; on streams whose only changes are anomalies it costs precision. A deployment would enable it per channel or per mission phase.</li>
+<li>Only the telemetry value is used; NASA's LSTM also reads command channels and trains a deep model per channel.</li>
+<li>Noise is modelled, not measured. The next step is to run the selected encodings on IBM Quantum hardware for a few channels.</li>
+<li>One global threshold is used for fairness; per-channel dynamic thresholds would raise every method's score.</li>
+</ul>
+
+<h2>7. How to run</h2>
+<pre>cd 06_Implementation
+python -m pytest -q                      # 27 tests
+python experiments/run_all.py            # all experiments, writes results/*.json
+python experiments/make_report.py        # this report
+python app/server.py                     # console at http://127.0.0.1:8050</pre>
+<p>The NASA data is downloaded once into data/ (Kaggle mirror of the original archive plus labeled_anomalies.csv from the telemanom repository).</p>
+
+<h2>References</h2>
+<ol class="refs">
+<li>K. Hundman, V. Constantinou, C. Laporte, I. Colwell, T. Soderstrom. Detecting spacecraft anomalies using LSTMs and nonparametric dynamic thresholding. KDD 2018.</li>
+<li>V. Havlíček et al. Supervised learning with quantum-enhanced feature spaces. Nature 567, 2019.</li>
+<li>M. Schuld, N. Killoran. Quantum machine learning in feature Hilbert spaces. Phys. Rev. Lett. 122, 2019.</li>
+<li>A. Bifet, R. Gavaldà. Learning from time-changing data with adaptive windowing. SDM 2007.</li>
+<li>B. Schölkopf et al. Estimating the support of a high-dimensional distribution. Neural Computation 13, 2001.</li>
+<li>S. Thanasilp, S. Wang, M. Cerezo, Z. Holmes. Exponential concentration in quantum kernel methods. arXiv:2208.11060, 2022.</li>
+<li>R. Shaydulin, S. M. Wild. Importance of kernel bandwidth in quantum machine learning. Phys. Rev. A 106, 2022.</li>
+<li>N. Cristianini et al. On kernel-target alignment. NeurIPS 2001; C. Cortes, M. Mohri, A. Rostamizadeh. Algorithms for learning kernels based on centered alignment. JMLR 13, 2012.</li>
+<li>S. Kim et al. Towards a rigorous evaluation of time-series anomaly detection. AAAI 2022.</li>
+<li>S. Sim, P. D. Johnson, A. Aspuru-Guzik. Expressibility and entangling capability of parameterized quantum circuits. Adv. Quantum Technol. 2, 2019.</li>
+<li>V. Bergholm et al. PennyLane: automatic differentiation of hybrid quantum-classical computations. arXiv:1811.04968.</li>
+</ol>
+</body></html>
