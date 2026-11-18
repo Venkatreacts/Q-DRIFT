@@ -148,6 +148,7 @@ const OURS = "Q-DRIFT";
 async function loadMission(cid, scn) {
   M.playing = false; $("#m-play").textContent = "Play";
   M.chan = cid; M.scn = scn;
+  $("#m-why").textContent = `Loading the ${cid} replay…`;
   let rep;
   try {
     rep = scn === "none" ? await api(`/api/replay/${cid}`) : await api(`/api/drift/${cid}/${scn}`);

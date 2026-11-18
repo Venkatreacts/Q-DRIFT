@@ -3,8 +3,8 @@
  * axes: light/mono/cool · posture: committed · contrast: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H3 E4 S4 R4 V4 · weakest: H, an app screen has no hero; the mission plate carries the first screen instead */
 /* Hallmark · waive 64 · the Wayfind theme file names mono as its material · Chivo Mono sets the whole console, labels included */
-@import url("./tokens.css?v=8");
-@import url("./base.css?v=8");
+@import url("./tokens.css?v=9");
+@import url("./base.css?v=9");
 
 @font-face {
   font-family: "Chivo Mono";
