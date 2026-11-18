@@ -3,8 +3,8 @@
  * axes: light/mono/cool · posture: committed · contrast: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H3 E4 S4 R4 V4 · weakest: H, an app screen has no hero; the mission plate carries the first screen instead */
 /* Hallmark · waive 64 · the Wayfind theme file names mono as its material · Chivo Mono sets the whole console, labels included */
-@import url("./tokens.css?v=9");
-@import url("./base.css?v=9");
+@import url("./tokens.css?v=10");
+@import url("./base.css?v=10");
 
 @font-face {
   font-family: "Chivo Mono";
@@ -55,7 +55,9 @@ code { font-family: var(--font-body); background: var(--color-paper-2); padding:
 .tabs button:active { background: var(--color-rule); }
 .tabs button:focus-visible { position: relative; z-index: 1; outline-offset: -5px; outline-color: var(--color-accent); }
 .tabs button[aria-current="page"] { background: var(--color-ink); color: var(--color-paper); }
-.engine { margin-left: auto; color: var(--color-muted); white-space: nowrap; font-size: var(--text-xs); }
+.overview { margin-left: auto; font-weight: 500; font-size: var(--text-xs); white-space: nowrap; color: var(--color-ink); }
+.overview:hover { color: var(--color-accent); }
+.engine { color: var(--color-muted); white-space: nowrap; font-size: var(--text-xs); }
 .engine b { color: var(--color-ink); font-weight: 500; }
 .engine .live { display: inline-block; width: 8px; height: 8px; margin-right: var(--space-2xs); background: var(--color-accent); vertical-align: 1px; }
 

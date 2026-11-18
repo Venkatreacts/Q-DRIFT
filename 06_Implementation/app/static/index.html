@@ -6,7 +6,7 @@
 <title>Q-DRIFT console</title>
 <meta name="description" content="Drift-aware quantum kernel anomaly detection on NASA SMAP and MSL spacecraft telemetry: replays, live runs and results.">
 <link rel="preload" href="fonts/chivo-mono.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
 <header class="top">
@@ -22,6 +22,7 @@
       <button data-view="method">How it works</button>
       <button data-view="team">Team</button>
     </nav>
+    <a class="overview" href="https://q-drift-qml.vercel.app/" target="_blank" rel="noopener">Project overview</a>
     <p class="engine" id="engine" aria-live="polite">Engine: checking</p>
   </div>
 </header>
@@ -176,9 +177,10 @@
       <tr><td>Aman Salarpuria</td><td>RA2411003012435</td></tr>
     </tbody></table>
     <p class="note-s credits">Data: NASA JPL SMAP/MSL anomaly benchmark (Hundman et al., 2018). Quantum simulation: PennyLane, cross-checked against Qiskit. Everything runs on a laptop CPU.</p>
+    <p class="credits"><a href="https://q-drift-qml.vercel.app/" target="_blank" rel="noopener">Project overview: the problem, the proposal and the literature</a></p>
   </section>
 </main>
 <noscript><p class="wrap">This console needs JavaScript to draw the telemetry and run the engine.</p></noscript>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
