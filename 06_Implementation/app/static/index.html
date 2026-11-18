@@ -3,156 +3,183 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Q-DRIFT Console</title>
-<link rel="stylesheet" href="styles.css">
+<title>Q-DRIFT console</title>
+<meta name="description" content="Drift-aware quantum kernel anomaly detection on NASA SMAP and MSL spacecraft telemetry: replays, live runs and results.">
+<link rel="preload" href="fonts/chivo-mono.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
-<div class="shell">
-  <nav class="rail" aria-label="Views">
-    <div class="brand"><b>Q-DRIFT</b><span>Drift-aware quantum kernels for spacecraft telemetry</span></div>
-    <button data-view="mission" aria-current="page">Mission replay</button>
-    <button data-view="lab">Drift lab</button>
-    <button data-view="results">Results</button>
-    <button data-view="encodings">Encoding library</button>
-    <button data-view="kernels">Kernel lab</button>
-    <button data-view="dataset">NASA dataset</button>
-    <button data-view="method">How it works</button>
-    <button data-view="team">Team</button>
-    <div class="foot">Everything here runs on this laptop: PennyLane statevector simulation, scikit-learn, NASA SMAP/MSL data.</div>
-  </nav>
+<header class="top">
+  <div class="top-in">
+    <a class="wordmark" href="#mission" aria-label="Q-DRIFT console, mission replay">Q-DRIFT</a>
+    <nav class="tabs" aria-label="Views">
+      <button data-view="mission" aria-current="page">Mission replay</button>
+      <button data-view="lab">Drift lab</button>
+      <button data-view="results">Results</button>
+      <button data-view="encodings">Encodings</button>
+      <button data-view="kernels">Kernel lab</button>
+      <button data-view="dataset">NASA data</button>
+      <button data-view="method">How it works</button>
+      <button data-view="team">Team</button>
+    </nav>
+    <p class="engine" id="engine" aria-live="polite">Engine: checking</p>
+  </div>
+</header>
 
-  <main>
-    <!-- ================= Mission replay ================= -->
-    <section class="view on" id="v-mission" aria-labelledby="h-mission">
+<main class="wrap">
+  <!-- ================= Mission replay ================= -->
+  <section class="view on" id="v-mission" aria-labelledby="h-mission">
+    <div class="head">
       <h1 id="h-mission">Mission replay</h1>
-      <p class="lede">Real NASA telemetry streams in time order. Watch the anomaly score, the drift alarm, and the moment Q-DRIFT re-chooses its quantum encoding.</p>
-      <div class="bar">
-        <label>Channel <select id="m-chan"></select></label>
-        <label>Scenario <select id="m-scn">
-          <option value="none">Original telemetry</option>
-          <option value="abrupt">Injected abrupt drift</option>
-          <option value="gradual">Injected gradual drift</option>
-          <option value="recurring">Injected recurring modes</option>
-        </select></label>
-        <label>Compare with <select id="m-cmp"></select></label>
-        <button class="btn primary" id="m-play">Play</button>
-        <div class="seg" role="group" aria-label="Playback speed">
-          <button data-speed="40" aria-pressed="false">1×</button>
-          <button data-speed="160" aria-pressed="true">4×</button>
-          <button data-speed="640" aria-pressed="false">16×</button>
-        </div>
-        <button class="btn" id="m-end">Show all</button>
-        <div class="clock" aria-live="off"><small>step</small><span id="m-t">0</span></div>
+      <p class="lede">Real NASA telemetry in time order. Watch the score, the drift alarm and the moment Q-DRIFT changes its quantum encoding.</p>
+    </div>
+    <div class="bar">
+      <label>Channel <select id="m-chan"></select></label>
+      <label>Scenario <select id="m-scn">
+        <option value="none">Original telemetry</option>
+        <option value="abrupt">Injected abrupt drift</option>
+        <option value="gradual">Injected gradual drift</option>
+        <option value="recurring">Injected recurring modes</option>
+      </select></label>
+      <label>Compare with <select id="m-cmp"></select></label>
+      <span class="bar-gap"></span>
+      <button class="btn primary" id="m-play">Play</button>
+      <div class="seg" role="group" aria-label="Playback speed">
+        <button data-speed="40" aria-pressed="false">1×</button>
+        <button data-speed="160" aria-pressed="true">4×</button>
+        <button data-speed="640" aria-pressed="false">16×</button>
       </div>
-      <div class="mission">
-        <div class="stack">
-          <div class="panel">
-            <div class="ph"><h2>Telemetry</h2>
-              <div class="key"><span><i style="background:var(--trace)"></i>signal</span><span><i class="box" style="background:var(--label)"></i>NASA-labelled anomaly</span><span><i style="background:var(--drift)"></i>drift injected</span></div></div>
-            <canvas class="chart" id="c-tele" height="190"></canvas>
-          </div>
-          <div class="panel">
-            <div class="ph"><h2>Anomaly score</h2>
-              <div class="key"><span><i style="background:var(--score)"></i>Q-DRIFT</span><span><i style="background:var(--classic)"></i><span id="k-cmp-name">baseline</span></span><span><i style="background:var(--drift)"></i>ADWIN drift</span><span><i style="background:var(--quantum)"></i>encoding switch</span></div></div>
-            <canvas class="chart" id="c-score" height="170"></canvas>
-            <canvas class="chart strip" id="c-strip" height="22" aria-label="Active encoding over time"></canvas>
-            <div class="small muted" id="strip-note">Colour band: which encoding Q-DRIFT used at each step.</div>
-          </div>
-          <div class="counters" id="m-counters"></div>
-        </div>
-        <div class="stack">
-          <div class="panel now" aria-live="polite">
-            <div class="ph"><h2>Encoding in use</h2><span class="small muted" id="m-sel-note"></span></div>
-            <div class="enc" id="m-enc">—</div>
-            <div class="why" id="m-why">Press Play to start the stream.</div>
-            <pre class="circ" id="m-circ"></pre>
-            <ol class="race" id="m-race" aria-label="Encoding candidates ranked by selection score"></ol>
-          </div>
-          <div class="panel">
-            <div class="ph"><h2>Event log</h2></div>
-            <ol class="log" id="m-log"></ol>
-          </div>
-        </div>
-      </div>
-    </section>
+      <button class="btn" id="m-end">Show all</button>
+      <p class="clock" aria-live="off"><span class="clock-l">Step</span> <span id="m-t">0</span></p>
+    </div>
 
-    <!-- ================= Drift lab ================= -->
-    <section class="view" id="v-lab" aria-labelledby="h-lab">
+    <div class="mission">
+      <div class="stack">
+        <figure class="well">
+          <figcaption class="ph"><h2>Telemetry</h2>
+            <span class="key"><span><i class="k-line k-trace"></i>signal</span><span><i class="k-box k-label"></i>NASA-labelled anomaly</span><span><i class="k-bar k-drift"></i>drift injected</span></span></figcaption>
+          <canvas class="chart" id="c-tele" height="190"></canvas>
+        </figure>
+        <figure class="well">
+          <figcaption class="ph"><h2>Anomaly score</h2>
+            <span class="key"><span><i class="k-line k-score"></i>Q-DRIFT score</span><span><i class="k-line k-classic"></i><span id="k-cmp-name">baseline</span></span><span><i class="k-bar k-drift"></i>drift detected</span><span><i class="k-sq k-switch"></i>encoding switch</span></span></figcaption>
+          <canvas class="chart" id="c-score" height="170"></canvas>
+          <canvas class="chart strip" id="c-strip" height="22" aria-label="Active encoding over time"></canvas>
+          <p class="note-s" id="strip-note">Band: the encoding family in use at each step. Blue: angle, green: ZZ, purple: IQP.</p>
+        </figure>
+        <div class="counters" id="m-counters"></div>
+      </div>
+
+      <aside class="plate now" aria-live="polite" aria-labelledby="h-now">
+        <div class="ph"><h2 id="h-now">Encoding in use</h2><span class="plate-note" id="m-sel-note"></span></div>
+        <p class="enc" id="m-enc">None yet</p>
+        <p class="why" id="m-why">Press Play to start the stream.</p>
+        <pre class="circ" id="m-circ"></pre>
+        <ol class="race" id="m-race" aria-label="Encoding candidates ranked by selection score"></ol>
+      </aside>
+    </div>
+
+    <section class="well log-well" aria-labelledby="h-log">
+      <div class="ph"><h2 id="h-log">Event log</h2><span class="note-s">Newest first</span></div>
+      <ol class="log" id="m-log"></ol>
+    </section>
+  </section>
+
+  <!-- ================= Drift lab ================= -->
+  <section class="view" id="v-lab" aria-labelledby="h-lab">
+    <div class="head">
       <h1 id="h-lab">Drift lab</h1>
-      <p class="lede">Choose a channel, change its operating mode, and run the full engine live. Q-DRIFT, the static quantum model and the classical RBF model all see the same stream.</p>
-      <div class="bar">
-        <label>Channel <select id="l-chan"></select></label>
-        <label>Drift <select id="l-drift">
-          <option value="abrupt">Abrupt shift</option><option value="gradual">Gradual ramp</option>
-          <option value="recurring">Recurring modes</option><option value="none">No drift</option></select></label>
-        <label>Qubits <select id="l-q"><option>4</option><option selected>6</option><option>8</option></select></label>
-        <label>Cost weight λ <input type="range" id="l-lam" min="0" max="0.5" step="0.05" value="0.1"><span id="l-lam-v">0.10</span></label>
-        <label>Shots <select id="l-shots"><option value="0">exact</option><option>8192</option><option>1024</option><option>128</option></select></label>
-        <button class="btn primary" id="l-run">Run live</button>
+      <p class="lede">Change a channel’s operating mode and run the whole engine live. Q-DRIFT, the static quantum model and the classical baselines see the same stream.</p>
+    </div>
+    <div class="bar">
+      <label>Channel <select id="l-chan"></select></label>
+      <label>Drift <select id="l-drift">
+        <option value="abrupt">Abrupt shift</option><option value="gradual">Gradual ramp</option>
+        <option value="recurring">Recurring modes</option><option value="none">No drift</option></select></label>
+      <label>Qubits <select id="l-q"><option>4</option><option selected>6</option><option>8</option></select></label>
+      <label>Cost weight λ <input type="range" id="l-lam" min="0" max="0.5" step="0.05" value="0.1"><output id="l-lam-v" for="l-lam">0.10</output></label>
+      <label>Shots <select id="l-shots"><option value="0">exact</option><option>8192</option><option>1024</option><option>128</option></select></label>
+      <span class="bar-gap"></span>
+      <button class="btn primary" id="l-run">Run live</button>
+    </div>
+    <div class="well" id="l-out">
+      <div class="empty">
+        <h2>No run yet</h2>
+        <p>Pick a channel and a drift, then press Run live. The table compares every method on that stream, and the run opens in Mission replay. Short channels such as M-1 or T-12 finish fastest.</p>
       </div>
-      <div class="panel" id="l-out"><p class="muted" style="margin:0">Results appear here. A run takes a few seconds; the replay then opens in Mission replay.</p></div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ================= Results ================= -->
-    <section class="view" id="v-results" aria-labelledby="h-results">
+  <!-- ================= Results ================= -->
+  <section class="view" id="v-results" aria-labelledby="h-results">
+    <div class="head">
       <h1 id="h-results">Results</h1>
-      <p class="lede">All 81 NASA channels, streamed in time order. Event-level scoring follows the benchmark's own protocol (Hundman et al., KDD 2018): an anomaly counts as found if any alarm overlaps it, and an alarm that overlaps no anomaly is a false alarm.</p>
-      <div id="r-body"><p class="muted">Loading results…</p></div>
-    </section>
+      <p class="lede">All 81 NASA channels in time order, scored as in the benchmark’s own protocol (Hundman et al., KDD 2018): an anomaly is found if any alarm overlaps it; an alarm overlapping none is false.</p>
+    </div>
+    <div id="r-body"><p class="note-s">Loading results…</p></div>
+  </section>
 
-    <!-- ================= Encodings ================= -->
-    <section class="view" id="v-encodings" aria-labelledby="h-enc">
+  <!-- ================= Encodings ================= -->
+  <section class="view" id="v-encodings" aria-labelledby="h-enc">
+    <div class="head">
       <h1 id="h-enc">Encoding library</h1>
-      <p class="lede">Eighteen ways to load a telemetry window into six qubits: three circuit families, three bandwidths, two depths. Expressibility is the KL divergence from Haar-random states (lower means more expressive); entangling capability is the mean Meyer–Wallach measure.</p>
-      <div class="bar"><label>Family <select id="e-fam"><option value="">All</option><option value="angle">Angle</option><option value="zz">ZZ</option><option value="iqp">IQP</option></select></label></div>
-      <div class="lib" id="e-lib"></div>
-    </section>
+      <p class="lede">Eighteen ways to load a window into six qubits: three circuit families, three bandwidths, two depths. Expressibility is the KL divergence from Haar-random states (lower is more expressive); entangling is the mean Meyer-Wallach measure.</p>
+    </div>
+    <div class="bar"><label>Family <select id="e-fam"><option value="">All</option><option value="angle">Angle</option><option value="zz">ZZ</option><option value="iqp">IQP</option></select></label></div>
+    <div class="lib" id="e-lib"></div>
+  </section>
 
-    <!-- ================= Kernels ================= -->
-    <section class="view" id="v-kernels" aria-labelledby="h-ker">
+  <!-- ================= Kernels ================= -->
+  <section class="view" id="v-kernels" aria-labelledby="h-ker">
+    <div class="head">
       <h1 id="h-ker">Kernel lab</h1>
-      <p class="lede">A quantum kernel is the overlap between two encoded states. Each heatmap compares 60 normal windows with 60 windows from labelled anomalies; a useful kernel shows a bright normal block and a dim cross block.</p>
-      <div class="grid2">
-        <div class="panel"><div class="ph"><h2>Kernel matrix</h2><label class="small">Encoding <select id="k-fm"></select></label></div>
-          <canvas class="chart" id="c-heat" height="360"></canvas>
-          <p class="small muted" id="k-heat-note"></p></div>
-        <div class="panel"><div class="ph"><h2>Kernel concentration</h2><label class="small">Family <select id="k-fam"><option value="iqp">IQP</option><option value="zz">ZZ</option><option value="angle">Angle</option></select></label></div>
-          <canvas class="chart" id="c-conc" height="360"></canvas>
-          <p class="small muted">Variance of off-diagonal kernel values against qubit count (log scale), on real telemetry windows. Too wide a bandwidth (β = 1) collapses exponentially as qubits are added; too narrow (β = 0.1) makes every window look alike. Only the band in between gives the detector something to work with, which is why Q-DRIFT searches bandwidth, not only circuit type.</p></div>
-      </div>
-    </section>
+      <p class="lede">A quantum kernel is the overlap of two encoded states. Each matrix compares 60 normal windows with 60 anomalous ones: a useful kernel has a dark normal block and a pale cross block.</p>
+    </div>
+    <div class="grid2">
+      <figure class="well"><figcaption class="ph"><h2>Kernel matrix</h2><label class="ctl">Encoding <select id="k-fm"></select></label></figcaption>
+        <canvas class="chart" id="c-heat" height="360"></canvas>
+        <p class="note-s" id="k-heat-note"></p></figure>
+      <figure class="well"><figcaption class="ph"><h2>Kernel concentration</h2><label class="ctl">Family <select id="k-fam"><option value="iqp">IQP</option><option value="zz">ZZ</option><option value="angle">Angle</option></select></label></figcaption>
+        <canvas class="chart" id="c-conc" height="360"></canvas>
+        <p class="note-s">Spread of kernel values against qubit count (log scale), on real telemetry. Too wide a bandwidth (β = 1) collapses as qubits are added; too narrow (β = 0.1) makes every window alike. Q-DRIFT searches bandwidth for this reason.</p></figure>
+    </div>
+  </section>
 
-    <!-- ================= Dataset ================= -->
-    <section class="view" id="v-dataset" aria-labelledby="h-data">
+  <!-- ================= Dataset ================= -->
+  <section class="view" id="v-dataset" aria-labelledby="h-data">
+    <div class="head">
       <h1 id="h-data">NASA SMAP and MSL telemetry</h1>
-      <p class="lede">Expert-labelled telemetry from the SMAP soil-moisture satellite and the Curiosity rover (Hundman et al., KDD 2018). Each tile is one channel's test stream with its labelled anomalies in red. Select a tile to replay it.</p>
-      <div class="bar"><label>Mission <select id="d-sc"><option value="">Both</option><option>SMAP</option><option>MSL</option></select></label><span class="muted small" id="d-count"></span></div>
-      <div class="chans" id="d-grid"></div>
-    </section>
+      <p class="lede">Expert-labelled telemetry from the SMAP soil-moisture satellite and the Curiosity rover (Hundman et al., KDD 2018). Each tile is one channel’s test stream, labelled anomalies in red. Select a tile to replay it.</p>
+    </div>
+    <div class="bar"><label>Mission <select id="d-sc"><option value="">Both</option><option>SMAP</option><option>MSL</option></select></label><span class="note-s" id="d-count"></span></div>
+    <div class="chans" id="d-grid"></div>
+  </section>
 
-    <!-- ================= Method ================= -->
-    <section class="view" id="v-method" aria-labelledby="h-method">
+  <!-- ================= Method ================= -->
+  <section class="view" id="v-method" aria-labelledby="h-method">
+    <div class="head">
       <h1 id="h-method">How Q-DRIFT works</h1>
-      <p class="lede">One loop runs for every new telemetry window. The quantum model is small and cheap to refit; the expensive part, choosing an encoding, happens only when the data's behaviour actually changes.</p>
-      <div class="panel"><canvas class="chart" id="c-flow" height="300" aria-label="Q-DRIFT pipeline diagram"></canvas></div>
-      <div class="grid2" style="margin-top:14px" id="method-text"></div>
-    </section>
+      <p class="lede">One loop runs for every telemetry window. The quantum model is small and cheap to refit; choosing an encoding, the expensive part, happens only when the data’s behaviour changes.</p>
+    </div>
+    <figure class="well"><canvas class="chart" id="c-flow" height="300" aria-label="Q-DRIFT pipeline: window, PCA, quantum kernel, one-class SVM, alarm; then drift check, validate, mode cache and re-choose encoding feeding back into the kernel"></canvas></figure>
+    <div class="grid2 method" id="method-text"></div>
+  </section>
 
-    <!-- ================= Team ================= -->
-    <section class="view" id="v-team" aria-labelledby="h-team">
+  <!-- ================= Team ================= -->
+  <section class="view" id="v-team" aria-labelledby="h-team">
+    <div class="head">
       <h1 id="h-team">Team</h1>
-      <p class="lede">LLJ II Team Task Performance Review, Quantum Machine Learning. SRM Institute of Science and Technology. Faculty: Dr. M. L. Sworna Kokila.</p>
-      <div class="panel" style="max-width:640px">
-        <table class="team"><thead><tr><th>Name</th><th>Register number</th></tr></thead><tbody>
-          <tr><td>Venkatanathan O R V</td><td>RA2411026011163</td></tr>
-          <tr><td>Mayukh Sarkar</td><td>RA2411026011218</td></tr>
-          <tr><td>Aman Salarpuria</td><td>RA2411003012435</td></tr>
-        </tbody></table>
-      </div>
-      <p class="small muted" style="margin-top:14px">Data: NASA JPL SMAP/MSL anomaly benchmark (Hundman et al., 2018). Quantum simulation: PennyLane. Cross-checked against Qiskit.</p>
-    </section>
-  </main>
-</div>
-<script src="app.js"></script>
+      <p class="lede">LLJ II Team Task Performance Review, Quantum Machine Learning, SRM Institute of Science and Technology. Faculty: Dr. M. L. Sworna Kokila.</p>
+    </div>
+    <table class="team"><thead><tr><th>Name</th><th>Register number</th></tr></thead><tbody>
+      <tr><td>Venkatanathan O R V</td><td>RA2411026011163</td></tr>
+      <tr><td>Mayukh Sarkar</td><td>RA2411026011218</td></tr>
+      <tr><td>Aman Salarpuria</td><td>RA2411003012435</td></tr>
+    </tbody></table>
+    <p class="note-s credits">Data: NASA JPL SMAP/MSL anomaly benchmark (Hundman et al., 2018). Quantum simulation: PennyLane, cross-checked against Qiskit. Everything runs on a laptop CPU.</p>
+  </section>
+</main>
+<noscript><p class="wrap">This console needs JavaScript to draw the telemetry and run the engine.</p></noscript>
+<script src="app.js?v=6"></script>
 </body>
 </html>

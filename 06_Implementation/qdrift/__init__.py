@@ -8,5 +8,8 @@ try:
     pyarrow.__version__
 except Exception:
     sys.modules["pyarrow"] = None
-    import pandas  # noqa: F401  (now imports without pyarrow)
+    try:
+        import pandas  # noqa: F401  (now imports without pyarrow)
+    except ImportError:
+        pass                     # no pandas at all (the deployed engine): nothing to repair
     del sys.modules["pyarrow"]   # scikit-learn probes sys.modules["pyarrow"] and expects a real module or none

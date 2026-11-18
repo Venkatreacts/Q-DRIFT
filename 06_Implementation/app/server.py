@@ -5,13 +5,16 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
+import threading
 import warnings
 from pathlib import Path
 
 import numpy as np
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -29,7 +32,15 @@ from run_all import _clean, _conv, _replay          # noqa: E402
 
 RES = ROOT / "results"
 app = FastAPI(title="Q-DRIFT")
+# a static copy of the console (app/export_static.py) may call this engine for live runs from another origin
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 META = labels()
+RUN_LOCK = threading.Lock()      # one live run at a time: each needs several hundred MB
+
+
+@app.get("/api/health")
+def health():
+    return {"ok": True, "channels": len(META), "busy": RUN_LOCK.locked()}
 
 
 def _file(p: Path):
@@ -89,6 +100,15 @@ def run(req: RunRequest):
         raise HTTPException(404, f"Unknown channel {req.chan}")
     if not 2 <= req.n_qubits <= 10:
         raise HTTPException(422, "Choose between 2 and 10 qubits.")
+    if not RUN_LOCK.acquire(blocking=False):
+        raise HTTPException(429, "The engine is busy with another run. Try again in a minute.")
+    try:
+        return _run(req)
+    finally:
+        RUN_LOCK.release()
+
+
+def _run(req: RunRequest):
     ch = load_channel(req.chan, META)
     test, t0 = (ch.test, None) if req.drift == "none" else inject(ch, req.drift)
     r = Runner(ch, Config(n_qubits=req.n_qubits, shots=req.shots, p2=req.p2), test)
@@ -106,5 +126,6 @@ def run(req: RunRequest):
 app.mount("/", StaticFiles(directory=Path(__file__).parent / "static", html=True), name="static")
 
 if __name__ == "__main__":
-    print("Q-DRIFT console: http://127.0.0.1:8050")
-    uvicorn.run(app, host="127.0.0.1", port=8050, log_level="warning")
+    host, port = os.environ.get("HOST", "127.0.0.1"), int(os.environ.get("PORT", 8050))
+    print(f"Q-DRIFT console: http://{host}:{port}")
+    uvicorn.run(app, host=host, port=port, log_level="warning")

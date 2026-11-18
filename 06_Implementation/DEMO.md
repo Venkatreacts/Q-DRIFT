@@ -12,6 +12,7 @@ About 6 minutes. Everything runs on this laptop; no internet needed.
    ```
 
 3. Open http://127.0.0.1:8050 in Edge or Chrome. Press F11 for full screen.
+   Backup if the laptop fails: https://qdrift-console.vercel.app (saved replays and results; live runs go to the Hugging Face engine when it is awake).
 4. Check that the Results page shows tables. If it says "No benchmark yet", run `python experiments/run_all.py` (takes about 40 minutes).
 
 ## Script
@@ -35,7 +36,7 @@ About 6 minutes. Everything runs on this laptop; no internet needed.
 
 - **Results**: the benchmark table on all 81 channels, the Wilcoxon tests, the threshold curve, the drift table.
 - **Kernel lab**: switch the heatmap between `IQP b=0.1 d=1`, `IQP b=0.3 d=1` and `ZZ b=1 d=2`. "Too narrow a bandwidth and every window looks the same; too wide and every window looks different. In between, normal windows resemble each other and anomalies stand apart." Then the concentration chart.
-- **Encoding library**: the circuits themselves.
+- **Encodings**: the circuits themselves.
 
 ## If something goes wrong
 

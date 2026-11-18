@@ -28,6 +28,16 @@ python experiments/make_report.py        # report/Q-DRIFT_LLJ2_Report.html
 python app/server.py                     # console at http://127.0.0.1:8050
 ```
 
+## Deploy
+
+```
+python deploy/export_static.py --engine https://venkatreacts-qdrift.hf.space   # static copy in deploy/dist
+cd deploy/dist && vercel deploy --prod                                        # https://qdrift-console.vercel.app
+python deploy/hf_space.py                                                     # engine on a Hugging Face Docker Space
+```
+
+The static copy serves every saved replay and result; its Drift lab sends live runs to the engine URL.
+
 Deep links into the console: `#mission/T-1/abrupt` opens a replay, and `#results`, `#kernels` and `#encodings` open those views. See `DEMO.md` for the review run sheet.
 
 ## Headline results

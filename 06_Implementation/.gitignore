@@ -4,3 +4,4 @@ __pycache__/
 # scratch probes and logs at the top of this folder
 /_*.py
 /_*.log
+deploy/dist/
