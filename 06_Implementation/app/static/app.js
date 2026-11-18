@@ -202,7 +202,7 @@ function race(cands, winKey, animate) {
   const ol = $("#m-race");
   const sorted = [...cands].sort((a, b) => b.score - a.score);
   const lo = Math.min(...cands.map((c) => c.score)), hi = Math.max(...cands.map((c) => c.score));
-  const rowH = 20;
+  const rowH = 16;
   ol.style.height = cands.length * rowH + "px";
   ol.innerHTML = cands.map((c) =>
     `<li data-k="${c.key}"><span>${esc(c.name)}</span><span class="b"></span><span class="v">${fmt(c.score, 2)}</span></li>`).join("");
@@ -271,6 +271,9 @@ function drawMission() {
   const T = rep.test.length, t = Math.min(M.t, T);
   $("#m-t").textContent = fmtInt(t) + " / " + fmtInt(T);
   const pad = { l: 40, r: 8, t: 18, b: 18 };
+  // size both charts so the whole replay fits the window: what is left after the bar, headers, strip and counters
+  const ch = Math.round(Math.max(100, Math.min(220, (innerHeight - 380) / 2)));
+  $("#c-tele").setAttribute("height", ch); $("#c-score").setAttribute("height", ch);
 
   // ---- telemetry
   {

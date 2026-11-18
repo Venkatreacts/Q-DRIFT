@@ -6,7 +6,7 @@
 <title>Q-DRIFT console</title>
 <meta name="description" content="Drift-aware quantum kernel anomaly detection on NASA SMAP and MSL spacecraft telemetry: replays, live runs and results.">
 <link rel="preload" href="fonts/chivo-mono.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 <header class="top">
@@ -29,19 +29,19 @@
 <main class="wrap">
   <!-- ================= Mission replay ================= -->
   <section class="view on" id="v-mission" aria-labelledby="h-mission">
-    <div class="head">
+    <div class="head visually-hidden">
       <h1 id="h-mission">Mission replay</h1>
       <p class="lede">Real NASA telemetry in time order. Watch the score, the drift alarm and the moment Q-DRIFT changes its quantum encoding.</p>
     </div>
     <div class="bar">
       <label>Channel <select id="m-chan"></select></label>
       <label>Scenario <select id="m-scn">
-        <option value="none">Original telemetry</option>
-        <option value="abrupt">Injected abrupt drift</option>
-        <option value="gradual">Injected gradual drift</option>
-        <option value="recurring">Injected recurring modes</option>
+        <option value="none">No drift (original)</option>
+        <option value="abrupt">Abrupt drift</option>
+        <option value="gradual">Gradual drift</option>
+        <option value="recurring">Recurring modes</option>
       </select></label>
-      <label>Compare with <select id="m-cmp"></select></label>
+      <label>Compare <select id="m-cmp"></select></label>
       <span class="bar-gap"></span>
       <button class="btn primary" id="m-play">Play</button>
       <div class="seg" role="group" aria-label="Playback speed">
@@ -50,13 +50,12 @@
         <button data-speed="640" aria-pressed="false">16×</button>
       </div>
       <button class="btn" id="m-end">Show all</button>
-      <p class="clock" aria-live="off"><span class="clock-l">Step</span> <span id="m-t">0</span></p>
     </div>
 
     <div class="mission">
       <div class="stack">
         <figure class="well">
-          <figcaption class="ph"><h2>Telemetry</h2>
+          <figcaption class="ph"><h2>Telemetry <span class="clock" aria-live="off"><span class="clock-l">step</span> <span id="m-t">0</span></span></h2>
             <span class="key"><span><i class="k-line k-trace"></i>signal</span><span><i class="k-box k-label"></i>NASA-labelled anomaly</span><span><i class="k-bar k-drift"></i>drift injected</span></span></figcaption>
           <canvas class="chart" id="c-tele" height="190"></canvas>
         </figure>
@@ -65,7 +64,7 @@
             <span class="key"><span><i class="k-line k-score"></i>Q-DRIFT score</span><span><i class="k-line k-classic"></i><span id="k-cmp-name">baseline</span></span><span><i class="k-bar k-drift"></i>drift detected</span><span><i class="k-sq k-switch"></i>encoding switch</span></span></figcaption>
           <canvas class="chart" id="c-score" height="170"></canvas>
           <canvas class="chart strip" id="c-strip" height="22" aria-label="Active encoding over time"></canvas>
-          <p class="note-s" id="strip-note">Band: the encoding family in use at each step. Blue: angle, green: ZZ, purple: IQP.</p>
+          <p class="note-s" id="strip-note">Band: circuit family in use. Blue angle, green ZZ, purple IQP.</p>
         </figure>
         <div class="counters" id="m-counters"></div>
       </div>
@@ -180,6 +179,6 @@
   </section>
 </main>
 <noscript><p class="wrap">This console needs JavaScript to draw the telemetry and run the engine.</p></noscript>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

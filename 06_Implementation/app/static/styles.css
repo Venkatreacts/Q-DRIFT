@@ -3,8 +3,8 @@
  * axes: light/mono/cool · posture: committed · contrast: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H3 E4 S4 R4 V4 · weakest: H, an app screen has no hero; the mission plate carries the first screen instead */
 /* Hallmark · waive 64 · the Wayfind theme file names mono as its material · Chivo Mono sets the whole console, labels included */
-@import url("./tokens.css?v=6");
-@import url("./base.css?v=6");
+@import url("./tokens.css?v=8");
+@import url("./base.css?v=8");
 
 @font-face {
   font-family: "Chivo Mono";
@@ -40,7 +40,7 @@ code { font-family: var(--font-body); background: var(--color-paper-2); padding:
 
 /* ---------- top bar */
 .top { position: sticky; top: 0; z-index: var(--z-sticky-nav); background: var(--color-paper); border-bottom: var(--rule-bar) solid var(--color-ink); }
-.top-in { max-width: var(--container); margin-inline: auto; padding: var(--space-sm) var(--space-lg); display: flex; align-items: center; gap: var(--space-lg); }
+.top-in { max-width: var(--container); margin-inline: auto; padding: var(--space-xs) var(--space-lg); display: flex; align-items: center; gap: var(--space-lg); }
 .wordmark { font-weight: 800; font-size: var(--text-lg); letter-spacing: -0.03em; text-decoration: none; color: var(--color-ink); white-space: nowrap; }
 .wordmark:hover { color: var(--color-accent); }
 .tabs { display: flex; min-width: 0; overflow-x: auto; scrollbar-width: none; }
@@ -101,7 +101,7 @@ output { min-width: 4ch; color: var(--color-ink); }
 .seg button:active { background: var(--color-rule); }
 .seg button:focus-visible { position: relative; z-index: 1; outline-offset: -5px; }
 .seg button[aria-pressed="true"] { background: var(--color-ink); color: var(--color-paper); }
-.clock { margin: 0; font-weight: 800; font-size: var(--text-xl); letter-spacing: -0.03em; white-space: nowrap; }
+.clock { margin: 0 0 0 var(--space-sm); font-weight: 800; font-size: var(--text-md); letter-spacing: -0.03em; white-space: nowrap; }
 .clock-l { font-weight: 500; font-size: var(--text-xs); color: var(--color-muted); letter-spacing: 0; }
 
 /* ---------- surfaces */
@@ -127,24 +127,24 @@ canvas.chart { display: block; width: 100%; }
 .strip { margin-top: var(--space-2xs); }
 
 .counters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.counters div { border: var(--rule-bar) solid var(--color-ink); margin-left: calc(-1 * var(--rule-bar)); padding: var(--space-sm) var(--space-md); background: var(--color-paper-3); min-width: 0; }
+.counters div { border: var(--rule-bar) solid var(--color-ink); margin-left: calc(-1 * var(--rule-bar)); padding: var(--space-xs) var(--space-sm); background: var(--color-paper-3); min-width: 0; }
 .counters div:first-child { margin-left: 0; }
-.counters b { display: block; font-weight: 800; font-size: var(--text-2xl); letter-spacing: -0.03em; line-height: 1.1; }
+.counters b { display: block; font-weight: 800; font-size: var(--text-xl); letter-spacing: -0.03em; line-height: 1.1; }
 .counters span { display: block; margin-top: var(--space-2xs); color: var(--color-muted); font-size: var(--text-xs); line-height: 1.4; }
 .counters .ours b { color: var(--color-accent); }
 
 /* the signature: the encoding in use, as a departure board */
 .now h2 { color: var(--color-paper); }
 .now .enc { margin: var(--space-xs) 0 0; font-weight: 800; font-size: var(--text-2xl); letter-spacing: -0.03em; line-height: 1.1; color: var(--color-accent-2); }
-.now .why { margin: var(--space-xs) 0 var(--space-sm); min-height: 3em; color: var(--color-paper-2); font-size: var(--text-xs); }
+.now .why { margin: var(--space-2xs) 0 var(--space-xs); min-height: 3em; color: var(--color-paper-2); font-size: var(--text-xs); }
 pre.circ {
   margin: 0; padding: var(--space-xs); border: var(--rule-hair) solid var(--color-ink-rule); background: var(--color-ink);
-  font: 11px/1.25 var(--font-code); color: var(--color-paper-2); overflow-x: auto; max-height: 190px;
+  font: 10px/1.2 var(--font-code); color: var(--color-paper-2); overflow-x: auto; max-height: 190px;
 }
 pre.circ:empty { display: none; }
 .race { list-style: none; margin: var(--space-sm) 0 0; padding: 0; position: relative; }
 .race li {
-  position: absolute; left: 0; right: 0; height: 20px;
+  position: absolute; left: 0; right: 0; height: 16px;
   display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) 3rem; align-items: center; gap: var(--space-xs);
   border-bottom: var(--rule-hair) solid var(--color-ink-rule);
   font-size: var(--text-xs); color: var(--color-rule); transition: transform 0.55s var(--ease-out);
@@ -239,3 +239,12 @@ td.ref-note { color: var(--color-muted); text-align: left; white-space: normal; 
   .bar-gap { display: none; }
   .log { columns: auto; }
 }
+
+/* the mission replay fits one projector screen (1280x720 and up): compact chrome, charts sized from the window in app.js */
+#v-mission .bar { margin-bottom: var(--space-sm); padding: var(--space-xs) 0; border-top: 0; }
+#v-mission .well { padding: var(--space-sm) var(--space-md); }
+#v-mission .ph { margin-bottom: var(--space-2xs); }
+#v-mission .stack, #v-mission .mission { gap: var(--space-sm); }
+#v-mission .now { padding: var(--space-sm) var(--space-md); }
+#v-mission .now pre.circ { max-height: 104px; }
+.wrap:has(#v-mission.on) { padding-top: var(--space-sm); }
